@@ -1,0 +1,241 @@
+use starknet::ContractAddress;
+use starlancer::types::{Job, Contract};
+
+#[starknet::interface]
+trait IMember<TContractState> {
+    fn add_member(
+        ref self: TContractState,
+        member: ContractAddress,
+        job: Job,
+        start_date: u128,
+        end_date: u128
+    );
+    fn disable_member(ref self: TContractState, member: ContractAddress);
+    fn update_contract(
+        ref self: TContractState, member_index: u32, contract_index: u32, contract: Contract
+    );
+    fn new_member_contract(ref self: TContractState, member_index: u32, contract: Contract);
+    fn is_member(self: @TContractState, address: ContractAddress) -> bool;
+    fn get_members(self: @TContractState, offset: u32, page_size: u32) -> Array<ContractAddress>;
+    fn get_member_contract_history(self: @TContractState, member_index: u32) -> Array<Contract>;
+    fn get_member_current_contract(self: @TContractState, member_index: u32) -> Contract;
+    fn get_member_by_index(self: @TContractState, member_index: u32) -> ContractAddress;
+}
+
+#[starknet::component]
+mod member_component {
+    use core::array::ArrayTrait;
+    use starknet::{ContractAddress, get_caller_address};
+    use starlancer::types::{Contract, Job};
+
+    #[storage]
+    struct Storage {
+        member_managers: LegacyMap<ContractAddress, bool>,
+        // member => active or inactive
+        members: LegacyMap<u32, ContractAddress>,
+        member_status: LegacyMap<ContractAddress, bool>,
+        // (member_index, contract_index) => bool
+        member_contract_history: LegacyMap<(u32, u32), Contract>,
+        // member index => number of contracts
+        count_member_contracts: LegacyMap<u32, u32>,
+        count_members: u32,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        AddMember: AddMember,
+        DisableMember: DisableMember,
+        UpdateContract: UpdateContract,
+        NewMemberContract: NewMemberContract
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct AddMember {
+        member: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct DisableMember {
+        member: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct UpdateContract {
+        member: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct NewMemberContract {
+        member: ContractAddress,
+        contract_index: u32
+    }
+
+
+    #[embeddable_as(Member)]
+    impl MemberImpl<
+        TContractState, +HasComponent<TContractState>
+    > of super::IMember<ComponentState<TContractState>> {
+        fn add_member(
+            ref self: ComponentState<TContractState>,
+            member: ContractAddress,
+            job: Job,
+            start_date: u128,
+            end_date: u128
+        ) {
+            assert(!self.member_status.read(member), 'Member existed');
+            self._assert_is_member_manager();
+            let current_contract: Contract = Contract {
+                start_date: start_date,
+                end_date: end_date,
+                contract_type: job.job_type,
+                fixed_price: job.fixed_price,
+                hourly_rate: job.hourly_rate,
+                pay_by_token: job.pay_by_token,
+                status: true
+            };
+
+            let count_members: u32 = self.count_members.read();
+
+            self.member_contract_history.write((count_members, 0), current_contract);
+
+            self.members.write(count_members, member);
+            self.member_status.write(member, true);
+            self.count_member_contracts.write(count_members, 1);
+
+            self.count_members.write(count_members + 1);
+
+            self.emit(AddMember { member: member });
+        }
+
+        fn new_member_contract(
+            ref self: ComponentState<TContractState>, member_index: u32, contract: Contract
+        ) {
+            let member: ContractAddress = self.members.read(member_index);
+            assert(self.member_status.read(member), 'Member is not active');
+
+            // New member contract here
+            let count_member_contracts: u32 = self.count_member_contracts.read(member_index);
+
+            self.member_contract_history.write((member_index, count_member_contracts), contract);
+
+            self.count_member_contracts.write(member_index, count_member_contracts + 1);
+
+            self.emit(NewMemberContract { member: member, contract_index: 1 });
+        }
+
+        fn disable_member(ref self: ComponentState<TContractState>, member: ContractAddress) {
+            self.member_status.write(member, false);
+            self.emit(DisableMember { member: member })
+        }
+
+        fn update_contract(
+            ref self: ComponentState<TContractState>,
+            member_index: u32,
+            contract_index: u32,
+            contract: Contract
+        ) {
+            let member: ContractAddress = self.members.read(member_index);
+            assert(self.member_status.read(member), 'Member is not active');
+
+            // Change contract here
+            self.member_contract_history.write((member_index, contract_index), contract);
+            // Emit
+            self.emit(UpdateContract { member });
+        }
+        fn is_member(self: @ComponentState<TContractState>, address: ContractAddress) -> bool {
+            self.member_status.read(address)
+        }
+
+        fn get_members(
+            self: @ComponentState<TContractState>, offset: u32, page_size: u32
+        ) -> Array<ContractAddress> {
+            let mut members: Array<ContractAddress> = ArrayTrait::new();
+            let mut i: u32 = 0;
+            loop {
+                if (i >= offset + page_size) {
+                    break;
+                }
+                if (offset + i < self.count_members.read()) {
+                    let member: ContractAddress = self.members.read(offset + i);
+                    members.append(member);
+                    i += 1;
+                } else {
+                    break;
+                }
+            };
+            members
+        }
+        fn get_member_contract_history(
+            self: @ComponentState<TContractState>, member_index: u32
+        ) -> Array<Contract> {
+            let mut contracts: Array<Contract> = ArrayTrait::new();
+            let mut i: u32 = 0;
+            let count_member_contracts: u32 = self.count_member_contracts.read(member_index);
+            loop {
+                if (i >= count_member_contracts) {
+                    break;
+                }
+                let contract: Contract = self.member_contract_history.read((member_index, i));
+                contracts.append(contract);
+                i += 1;
+            };
+            contracts
+        }
+        fn get_member_current_contract(
+            self: @ComponentState<TContractState>, member_index: u32
+        ) -> Contract {
+            let count_member_contracts: u32 = self.count_member_contracts.read(member_index);
+            self.member_contract_history.read((member_index, count_member_contracts))
+        }
+
+        fn get_member_by_index(
+            self: @ComponentState<TContractState>, member_index: u32
+        ) -> ContractAddress {
+            self.members.read(member_index)
+        }
+    }
+
+    #[generate_trait]
+    impl MemberInternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of MemberInternalTrait<TContractState> {
+        fn _assert_is_member_manager(self: @ComponentState<TContractState>) {
+            assert(self.member_managers.read(get_caller_address()), 'Not member manager');
+        }
+
+        fn _add_member_managers(
+            ref self: ComponentState<TContractState>, member_managers: Array<ContractAddress>
+        ) {
+            let len: u32 = member_managers.len().into();
+
+            if (len > 0) {
+                let mut i: u32 = 0;
+                loop {
+                    if (i >= len) {
+                        break;
+                    }
+                    self.member_managers.write(*member_managers.at(i), true);
+                    i += 1;
+                }
+            }
+        }
+
+        fn _remove_member_managers(
+            ref self: ComponentState<TContractState>, member_managers: Array<ContractAddress>
+        ) {
+            let len: u32 = member_managers.len().into();
+
+            if (len > 0) {
+                let mut i: u32 = 0;
+                loop {
+                    if (i >= len) {
+                        break;
+                    }
+                    self.member_managers.write(*member_managers.at(i), false);
+                    i += 1;
+                }
+            }
+        }
+    }
+}

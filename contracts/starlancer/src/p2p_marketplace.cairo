@@ -36,7 +36,7 @@ mod P2PJobsMarketplace {
         #[substorage(v0)]
         p2p_tasks: task_component::Storage
     }
-    
+
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -93,20 +93,10 @@ mod P2PJobsMarketplace {
 
             // Transfer here
 
-            let token_address: Option<ContractAddress> =
-                starknet::contract_address_try_from_felt252(
-                job.pay_by_token
-            );
-
-            match token_address {
-                Option::Some(address) => {
-                    let erc20_dispatcher: IERC20Dispatcher = IERC20Dispatcher {
-                        contract_address: address
-                    };
-                    erc20_dispatcher.transfer_from(job.creator, dev, total_amount);
-                },
-                Option::None => { assert(false, 'Token address is not correct'); },
-            }
+            let erc20_dispatcher: IERC20Dispatcher = IERC20Dispatcher {
+                contract_address: job.pay_by_token
+            };
+            erc20_dispatcher.transfer_from(job.creator, dev, total_amount);
         }
     }
 }

@@ -275,7 +275,6 @@ mod project_component {
                         task_detail: task.task_detail,
                         // hours
                         estimate: task.estimate,
-                        task_type: task.task_type,
                         status: status,
                     }
                 )
@@ -371,7 +370,6 @@ mod project_component {
                         short_description: task.short_description,
                         task_detail: task.task_detail,
                         estimate: task.estimate,
-                        task_type: task.task_type,
                         status: TaskStatus::OPEN,
                     }
                 );

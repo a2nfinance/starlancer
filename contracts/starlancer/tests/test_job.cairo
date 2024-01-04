@@ -26,6 +26,7 @@ fn test_create_job() {
     start_prank(cheatcodes::CheatTarget::One(contract_address), job_manager);
 
     let dao_job_dispatcher: IDAOJobsDispatcher = IDAOJobsDispatcher { contract_address };
+    
     dao_job_dispatcher
         .add_job(
             Job {
@@ -35,7 +36,7 @@ fn test_create_job() {
                 title: 'Test job',
                 short_description: 'Test description',
                 job_detail: 'Test detail',
-                pay_by_token: fake_token_address.into(),
+                pay_by_token: fake_token_address,
                 job_type: ContractType::HOURY,
                 fixed_price: 0,
                 hourly_rate: 3000000000000000,

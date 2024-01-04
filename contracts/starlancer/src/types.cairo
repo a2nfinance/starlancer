@@ -36,7 +36,7 @@ struct Job {
     job_type: ContractType,
     fixed_price: u256,
     hourly_rate: u256,
-    pay_by_token: felt252,
+    pay_by_token: ContractAddress,
     status: bool
 }
 
@@ -62,7 +62,6 @@ struct Task {
     task_detail: felt252,
     // hours
     estimate: u16,
-    task_type: TaskType,
     status: TaskStatus,
 }
 #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -72,7 +71,7 @@ struct Contract {
     contract_type: ContractType,
     fixed_price: u256,
     hourly_rate: u256,
-    pay_by_token: felt252,
+    pay_by_token: ContractAddress,
     status: bool,
 }
 
@@ -98,3 +97,11 @@ struct DAOStatistics {
     num_jobs: u32
 }
 
+
+#[derive(Copy, Drop, Serde, starknet::Store)]
+struct DAODetail {
+    name: felt252,
+    short_description: felt252,
+    detail: felt252,
+    social_networks: felt252
+}

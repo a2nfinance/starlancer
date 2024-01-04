@@ -3,6 +3,9 @@ use starlancer::types::{Job};
 #[starknet::interface]
 trait IP2PJob<TContractState> {
     fn get_job_by_index(self: @TContractState, job_index: u32) -> Job;
+    fn get_job_by_local_index(
+        self: @TContractState, employer: ContractAddress, local_job_index: u32
+    ) -> Job;
     fn get_jobs(self: @TContractState, offset: u32, page_size: u32) -> Array<Job>;
     fn get_employer_jobs(
         self: @TContractState, employer: ContractAddress, offset: u32, page_size: u32
@@ -35,8 +38,8 @@ mod job_component {
         employer_jobs: LegacyMap::<(ContractAddress, u32), u32>,
         // employer, number of jobs
         count_employer_jobs: LegacyMap::<ContractAddress, u32>,
-        // local job index, index of an accepted candidate
-        accepted_candidate: LegacyMap<u32, u32>
+        // employer, local job index, index of an accepted candidate
+        accepted_candidate: LegacyMap<(ContractAddress, u32), u32>
     }
 
     #[event]
@@ -88,6 +91,14 @@ mod job_component {
     > of super::IP2PJob<ComponentState<TContractState>> {
         fn get_job_by_index(self: @ComponentState<TContractState>, job_index: u32) -> Job {
             self.jobs.read(job_index)
+        }
+
+        fn get_job_by_local_index(
+            self: @ComponentState<TContractState>, employer: ContractAddress, local_job_index: u32
+        ) -> Job {
+            let (_, job): (u32, Job) = self
+                ._get_job_from_local_index(employer, local_job_index);
+            job
         }
 
         fn get_jobs(
@@ -216,18 +227,15 @@ mod job_component {
         }
         fn close_job(ref self: ComponentState<TContractState>, local_job_index: u32) {
             self._assert_is_employer(local_job_index);
-            let global_job_index: u32 = self
-                .employer_jobs
-                .read((get_caller_address(), local_job_index));
-
-            let job: Job = self.jobs.read(global_job_index);
+            let (global_index, job): (u32, Job) = self
+                ._get_job_from_local_index(get_caller_address(), local_job_index);
 
             assert(job.status, 'Not active job');
 
             self
                 .jobs
                 .write(
-                    global_job_index,
+                    global_index,
                     Job {
                         creator: job.creator,
                         start_date: job.start_date,
@@ -250,16 +258,16 @@ mod job_component {
             end_date: u128
         ) {
             self._assert_is_employer(local_job_index);
-            let global_job_index: u32 = self
-                .employer_jobs
-                .read((get_caller_address(), local_job_index));
 
-            let job: Job = self.jobs.read(global_job_index);
+            let (global_index, job): (u32, Job) = self
+                ._get_job_from_local_index(get_caller_address(), local_job_index);
+
             assert(!job.status, 'Not close job');
+
             self
                 .jobs
                 .write(
-                    global_job_index,
+                    global_index,
                     Job {
                         creator: job.creator,
                         start_date: start_date,
@@ -279,7 +287,7 @@ mod job_component {
             ref self: ComponentState<TContractState>, local_job_index: u32, candidate_index: u32
         ) {
             self._assert_is_employer(local_job_index);
-            self.accepted_candidate.write(local_job_index, candidate_index);
+            self.accepted_candidate.write((get_caller_address(), local_job_index), candidate_index);
         }
     }
 
@@ -287,11 +295,16 @@ mod job_component {
     impl P2PJobInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of P2PJobInternalImplTrait<TContractState> {
-        fn _assert_is_employer(self: @ComponentState<TContractState>, local_job_index: u32) {
-            let global_job_index: u32 = self
-                .employer_jobs
-                .read((get_caller_address(), local_job_index));
+        fn _get_job_from_local_index(
+            self: @ComponentState<TContractState>, employer: ContractAddress, local_job_index: u32
+        ) -> (u32, Job,) {
+            let global_job_index: u32 = self.employer_jobs.read((employer, local_job_index));
             let job: Job = self.jobs.read(global_job_index);
+            (global_job_index, job,)
+        }
+        fn _assert_is_employer(self: @ComponentState<TContractState>, local_job_index: u32) {
+            let (_, job): (u32, Job) = self
+                ._get_job_from_local_index(get_caller_address(), local_job_index);
 
             assert(job.creator == get_caller_address(), 'Not employer');
         }

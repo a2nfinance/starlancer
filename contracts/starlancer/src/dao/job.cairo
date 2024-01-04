@@ -163,14 +163,31 @@ mod job_component {
         fn add_job(ref self: ComponentState<TContractState>, job: Job) {
             self._assert_is_job_manager();
             let count_job: u32 = self.count_job.read();
-            self.jobs.write(count_job, job);
-            self.count_job.write(count_job + 1)
+            self
+                .jobs
+                .write(
+                    count_job,
+                    Job {
+                        creator: get_caller_address(),
+                        start_date: job.start_date,
+                        end_date: job.end_date,
+                        title: job.title,
+                        short_description: job.short_description,
+                        job_detail: job.job_detail,
+                        job_type: job.job_type,
+                        fixed_price: job.fixed_price,
+                        hourly_rate: job.hourly_rate,
+                        pay_by_token: job.pay_by_token,
+                        status: true
+                    }
+                );
+            self.count_job.write(count_job + 1);
         }
 
         fn close_job(ref self: ComponentState<TContractState>, job_index: u32) {
             self._assert_is_job_manager();
             let job: Job = self.jobs.read(job_index);
-
+            assert(job.status, 'Not active job');
             self
                 .jobs
                 .write(
@@ -199,7 +216,7 @@ mod job_component {
         ) {
             self._assert_is_job_manager();
             let job: Job = self.jobs.read(job_index);
-
+            assert(!job.status, 'Not close job');
             self
                 .jobs
                 .write(

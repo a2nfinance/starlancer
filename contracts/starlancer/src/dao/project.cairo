@@ -112,7 +112,22 @@ mod project_component {
         fn create_project(ref self: ComponentState<TContractState>, project: Project) {
             self._assert_is_project_manager();
             let count_project: u32 = self.count_project.read();
-            self.projects.write(count_project, project);
+
+            self
+                .projects
+                .write(
+                    count_project,
+                    Project {
+                        creator: get_caller_address(),
+                        start_date: project.start_date,
+                        end_date: project.end_date,
+                        title: project.title,
+                        short_description: project.short_description,
+                        project_detail: project.project_detail,
+                        status: true
+                    }
+                );
+
             self.count_project.write(count_project + 1);
             self
                 .emit(
@@ -344,10 +359,23 @@ mod project_component {
             let count_project_tasks: u32 = self.count_project_tasks.read(project_index);
             let count_member_tasks: u32 = self.count_member_tasks.read(assignee);
 
-            self.project_tasks.write((project_index, count_project_tasks), task);
+            self
+                .project_tasks
+                .write(
+                    (project_index, count_project_tasks),
+                    Task {
+                        creator: get_caller_address(),
+                        start_date: task.start_date,
+                        deadline: task.deadline,
+                        title: task.title,
+                        short_description: task.short_description,
+                        task_detail: task.task_detail,
+                        estimate: task.estimate,
+                        task_type: task.task_type,
+                        status: TaskStatus::OPEN,
+                    }
+                );
             self.count_project_tasks.write(project_index, count_project_tasks + 1);
-            assert(assignee.is_non_zero(), 'Zero address');
-
             self
                 .member_tasks
                 .write((assignee, count_member_tasks), (project_index, count_project_tasks));
@@ -379,17 +407,30 @@ mod project_component {
                             break;
                         }
                         let key: (u32, u32) = self.member_tasks.read((member, i));
-
-                        let is_paid: bool = self.paid_tasks.read(key);
-
-                        if (is_paid) {
-                            break;
-                        }
-
                         let task: Task = self.project_tasks.read(key);
 
-                        amount += task.estimate.into() * contract.hourly_rate;
-                        self.paid_tasks.write(key, true);
+                        let is_completed_task = match task.status {
+                            TaskStatus::OPEN => false,
+                            TaskStatus::ASSIGNED => false,
+                            TaskStatus::PENDING => false,
+                            TaskStatus::TESTING => false,
+                            TaskStatus::REVIEWING => false,
+                            TaskStatus::COMPLETE => true,
+                            TaskStatus::CANCELLED => false
+                        };
+
+                        if (is_completed_task) {
+                            let is_paid: bool = self.paid_tasks.read(key);
+
+                            if (is_paid) {
+                                break;
+                            }
+
+                            let task: Task = self.project_tasks.read(key);
+
+                            amount += task.estimate.into() * contract.hourly_rate;
+                            self.paid_tasks.write(key, true);
+                        }
 
                         i += 1;
                     };

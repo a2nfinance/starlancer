@@ -1,5 +1,5 @@
 use starknet::ContractAddress;
-use starlancer::types::{Task};
+use starlancer::types::{Task, Job};
 #[starknet::interface]
 trait IP2PTask<TContractState> {
     fn get_job_tasks(self: @TContractState, job_index: u32) -> Array<Task>;
@@ -12,11 +12,11 @@ mod task_component {
     use starlancer::types::{Task, Job, TaskStatus, ContractType};
     #[storage]
     struct Storage {
-        // job_index, index of a task of a job, task
+        // global_job_index, index of a task of a job, task
         job_tasks: LegacyMap::<(u32, u32), Task>,
-        // job_index, number of tasks of a job
+        // global_job_index, number of tasks of a job
         count_job_tasks: LegacyMap::<u32, u32>,
-        // job_index, index of a task of a job, paid or not paid
+        // global_job_index, index of a task of a job, paid or not paid
         paid_tasks: LegacyMap::<(u32, u32), bool>
     }
 
@@ -65,12 +65,54 @@ mod task_component {
 
             tasks
         }
+
+        
     }
 
     #[generate_trait]
     impl P2PTaskInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of P2PTaskInternalImplTrait<TContractState> {
+        fn _get_payment_amount(
+            self: @ComponentState<TContractState>, job_index: u32, job: Job
+        ) -> u256 {
+            let mut total_amount: u256 = 0;
+            match job.job_type {
+                ContractType::FIXED_PRICE => { total_amount = job.fixed_price; },
+                ContractType::HOURY => {
+                    let mut i: u32 = 0;
+                    let count_job_tasks: u32 = self.count_job_tasks.read(job_index);
+                    loop {
+                        if (i >= count_job_tasks) {
+                            break;
+                        }
+                        let task: Task = self.job_tasks.read((job_index, i));
+                        let is_completed_task = match task.status {
+                            TaskStatus::OPEN => false,
+                            TaskStatus::ASSIGNED => false,
+                            TaskStatus::PENDING => false,
+                            TaskStatus::TESTING => false,
+                            TaskStatus::REVIEWING => false,
+                            TaskStatus::COMPLETE => true,
+                            TaskStatus::CANCELLED => false
+                        };
+
+                        if (is_completed_task) {
+                            let is_paid: bool = self.paid_tasks.read((job_index, i));
+
+                            if (is_paid) {
+                                break;
+                            }
+
+                            total_amount += task.estimate.into() * job.hourly_rate;
+                        }
+                        i += 1;
+                    };
+                },
+            }
+
+            total_amount
+        }
         fn _calculate_billing(
             ref self: ComponentState<TContractState>, job_index: u32, job: Job
         ) -> u256 {

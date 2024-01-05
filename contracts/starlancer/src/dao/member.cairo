@@ -11,7 +11,7 @@ trait IMember<TContractState> {
     fn is_member(self: @TContractState, address: ContractAddress) -> bool;
     fn get_members(self: @TContractState, offset: u32, page_size: u32) -> Array<ContractAddress>;
     fn get_member_contract_history(self: @TContractState, member_index: u32) -> Array<Contract>;
-    fn get_member_current_contract(self: @TContractState, member_index: u32) -> Contract;
+    fn get_member_current_contract(self: @TContractState, member_index: u32) -> Option<Contract>;
     fn get_member_by_index(self: @TContractState, member_index: u32) -> ContractAddress;
 }
 
@@ -19,7 +19,7 @@ trait IMember<TContractState> {
 mod member_component {
     use core::array::ArrayTrait;
     use starknet::{ContractAddress, get_caller_address};
-    use starlancer::types::{Contract, Job};
+    use starlancer::types::{Contract, Job, ContractType};
     use starlancer::error::Errors;
     #[storage]
     struct Storage {
@@ -145,9 +145,16 @@ mod member_component {
         }
         fn get_member_current_contract(
             self: @ComponentState<TContractState>, member_index: u32
-        ) -> Contract {
+        ) -> Option<Contract> {
             let count_member_contracts: u32 = self.count_member_contracts.read(member_index);
-            self.member_contract_history.read((member_index, count_member_contracts))
+            let mut current_index: u32 = 0;
+            if count_member_contracts > 0 {
+                current_index = count_member_contracts - 1;
+                Option::Some(self.member_contract_history.read((member_index, current_index)))
+            } else {
+                Option::None
+            }
+           
         }
 
         fn get_member_by_index(
@@ -170,6 +177,7 @@ mod member_component {
         ) {
             assert(!self.member_status.read(candidate), Errors::MEMBER_EXISTED);
             self._assert_is_member_manager();
+          
             let current_contract: Contract = Contract {
                 start_date: start_date,
                 end_date: end_date,
@@ -192,6 +200,7 @@ mod member_component {
 
             self.emit(AddMember { member: candidate });
         }
+        
         fn _assert_is_member_manager(self: @ComponentState<TContractState>) {
             assert(self.member_managers.read(get_caller_address()), Errors::NOT_MEMBER_MANAGER);
         }

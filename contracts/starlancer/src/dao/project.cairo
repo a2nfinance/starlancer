@@ -1,8 +1,13 @@
 use starlancer::types::{Project, Task, TaskStatus};
-
+use starknet::{ContractAddress};
 #[starknet::interface]
 trait IDAOProject<TContractState> {
-    fn create_project(ref self: TContractState, project: Project);
+    fn create_project(
+        ref self: TContractState,
+        task_managers: Array<ContractAddress>,
+        code_reviewers: Array<ContractAddress>,
+        project: Project
+    );
     fn get_projects(self: @TContractState) -> Array<Project>;
     fn get_project_tasks(self: @TContractState, project_index: u32) -> Array<Task>;
     fn get_project(self: @TContractState, project_index: u32) -> Project;
@@ -110,7 +115,12 @@ mod project_component {
     impl DAOProjectImpl<
         TContractState, +HasComponent<TContractState>
     > of super::IDAOProject<ComponentState<TContractState>> {
-        fn create_project(ref self: ComponentState<TContractState>, project: Project) {
+        fn create_project(
+            ref self: ComponentState<TContractState>,
+            task_managers: Array<ContractAddress>,
+            code_reviewers: Array<ContractAddress>,
+            project: Project
+        ) {
             self._assert_is_project_manager();
             let count_project: u32 = self.count_project.read();
 
@@ -128,7 +138,25 @@ mod project_component {
                         status: true
                     }
                 );
+            let mut i: u32 = 0;
+            let len_task_managers: u32 = task_managers.len();
+            loop {
+                if (i >= len_task_managers) {
+                    break;
+                }
+                self.task_managers.write((count_project, *task_managers.at(i)), true);
+                i += 1;
+            };
 
+            let mut j: u32 = 0;
+            let len_code_reviewer: u32 = code_reviewers.len();
+            loop {
+                if (i >= len_code_reviewer) {
+                    break;
+                }
+                self.code_reviewers.write((count_project, *code_reviewers.at(i)), true);
+                i += 1;
+            };
             self.count_project.write(count_project + 1);
             self
                 .emit(

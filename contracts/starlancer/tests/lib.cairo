@@ -1,3 +1,3 @@
 mod utils;
-// mod dao_components;
-mod contract;
+// mod contract;
+mod full_scenario;

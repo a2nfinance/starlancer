@@ -22,3 +22,9 @@ fn get_mock_whitelisted_contributors() -> (ContractAddress, ContractAddress) {
     let acc2: ContractAddress = starknet::contract_address_const::<0x09>();
     return (acc1, acc2);
 }
+
+fn get_mock_project_roles() -> (ContractAddress, ContractAddress) {
+    let task_manager: ContractAddress = starknet::contract_address_const::<0x10>();
+    let code_reviewer: ContractAddress = starknet::contract_address_const::<0x11>();
+    return (task_manager, code_reviewer);
+}

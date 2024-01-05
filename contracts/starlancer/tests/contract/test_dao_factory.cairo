@@ -7,7 +7,7 @@ use snforge_std::{
     ContractClass, get_class_hash, cheatcodes
 };
 use starknet::{ContractAddress, get_contract_address, ClassHash};
-use starlancer_tests::utils::mock_data::{get_mock_addresses};
+use super::super::utils::mock_data::{get_mock_addresses};
 use starlancer::dao_factory::IDAOFactoryDispatcher;
 use starlancer::dao_contract::IDAODispatcher;
 use starlancer::types::{DAODetail, MemberRoles};
@@ -68,7 +68,6 @@ fn test_create_dao() {
         );
     let dao_dispatcher: IDAODispatcher = IDAODispatcher { contract_address: deployed_contract };
     let dao_detail: DAODetail = dao_dispatcher.get_dao_detail().into();
-    println!("{}", dao_detail.name);
     stop_prank(cheatcodes::CheatTarget::One(dao_factory_address));
 
     assert(dao_detail.name == 'Test DAO', 'Not create DAO success');

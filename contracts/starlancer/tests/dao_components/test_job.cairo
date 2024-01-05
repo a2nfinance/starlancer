@@ -7,14 +7,15 @@ use snforge_std::{
     ContractClass, get_class_hash, cheatcodes
 };
 
-use super::contract::{deploy_contract, get_important_addresses};
+use starlancer_tests::utils::contract_deployer::{deploy_dao_contract};
+use starlancer_tests::utils::mock_data::{get_mock_addresses};
 
 
 #[test]
 fn test_create_job() {
     let (caller, project_manager, job_manager, member_manager, treasury_manager) =
-        get_important_addresses();
-    let contract_address = deploy_contract(
+        get_mock_addresses();
+    let contract_address = deploy_dao_contract(
         'DAO',
         caller,
         array![treasury_manager],
@@ -26,7 +27,7 @@ fn test_create_job() {
     start_prank(cheatcodes::CheatTarget::One(contract_address), job_manager);
 
     let dao_job_dispatcher: IDAOJobsDispatcher = IDAOJobsDispatcher { contract_address };
-    
+
     dao_job_dispatcher
         .add_job(
             Job {

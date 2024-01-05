@@ -3,13 +3,6 @@ use starlancer::types::{Job, Contract};
 
 #[starknet::interface]
 trait IMember<TContractState> {
-    fn add_member(
-        ref self: TContractState,
-        member: ContractAddress,
-        job: Job,
-        start_date: u128,
-        end_date: u128
-    );
     fn disable_member(ref self: TContractState, member: ContractAddress);
     fn update_contract(
         ref self: TContractState, member_index: u32, contract_index: u32, contract: Contract
@@ -27,7 +20,7 @@ mod member_component {
     use core::array::ArrayTrait;
     use starknet::{ContractAddress, get_caller_address};
     use starlancer::types::{Contract, Job};
-
+    use starlancer::error::Errors;
     #[storage]
     struct Storage {
         member_managers: LegacyMap<ContractAddress, bool>,
@@ -76,43 +69,11 @@ mod member_component {
     impl MemberImpl<
         TContractState, +HasComponent<TContractState>
     > of super::IMember<ComponentState<TContractState>> {
-        fn add_member(
-            ref self: ComponentState<TContractState>,
-            member: ContractAddress,
-            job: Job,
-            start_date: u128,
-            end_date: u128
-        ) {
-            assert(!self.member_status.read(member), 'Member existed');
-            self._assert_is_member_manager();
-            let current_contract: Contract = Contract {
-                start_date: start_date,
-                end_date: end_date,
-                contract_type: job.job_type,
-                fixed_price: job.fixed_price,
-                hourly_rate: job.hourly_rate,
-                pay_by_token: job.pay_by_token,
-                status: true
-            };
-
-            let count_members: u32 = self.count_members.read();
-
-            self.member_contract_history.write((count_members, 0), current_contract);
-
-            self.members.write(count_members, member);
-            self.member_status.write(member, true);
-            self.count_member_contracts.write(count_members, 1);
-
-            self.count_members.write(count_members + 1);
-
-            self.emit(AddMember { member: member });
-        }
-
         fn new_member_contract(
             ref self: ComponentState<TContractState>, member_index: u32, contract: Contract
         ) {
             let member: ContractAddress = self.members.read(member_index);
-            assert(self.member_status.read(member), 'Member is not active');
+            assert(self.member_status.read(member), Errors::MEMBER_NOT_ACTIVE);
 
             // New member contract here
             let count_member_contracts: u32 = self.count_member_contracts.read(member_index);
@@ -136,7 +97,7 @@ mod member_component {
             contract: Contract
         ) {
             let member: ContractAddress = self.members.read(member_index);
-            assert(self.member_status.read(member), 'Member is not active');
+            assert(self.member_status.read(member), Errors::MEMBER_NOT_ACTIVE);
 
             // Change contract here
             self.member_contract_history.write((member_index, contract_index), contract);
@@ -200,8 +161,39 @@ mod member_component {
     impl MemberInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of MemberInternalTrait<TContractState> {
+        fn _add_member(
+            ref self: ComponentState<TContractState>,
+            candidate: ContractAddress,
+            job: Job,
+            start_date: u128,
+            end_date: u128
+        ) {
+            assert(!self.member_status.read(candidate), Errors::MEMBER_EXISTED);
+            self._assert_is_member_manager();
+            let current_contract: Contract = Contract {
+                start_date: start_date,
+                end_date: end_date,
+                contract_type: job.job_type,
+                fixed_price: job.fixed_price,
+                hourly_rate: job.hourly_rate,
+                pay_by_token: job.pay_by_token,
+                status: true
+            };
+
+            let count_members: u32 = self.count_members.read();
+
+            self.member_contract_history.write((count_members, 0), current_contract);
+
+            self.members.write(count_members, candidate);
+            self.member_status.write(candidate, true);
+            self.count_member_contracts.write(count_members, 1);
+
+            self.count_members.write(count_members + 1);
+
+            self.emit(AddMember { member: candidate });
+        }
         fn _assert_is_member_manager(self: @ComponentState<TContractState>) {
-            assert(self.member_managers.read(get_caller_address()), 'Not member manager');
+            assert(self.member_managers.read(get_caller_address()), Errors::NOT_MEMBER_MANAGER);
         }
 
         fn _add_member_managers(

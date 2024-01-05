@@ -16,6 +16,8 @@ mod treasury_component {
     use openzeppelin::token::erc20::interface::IERC20DispatcherTrait;
     use openzeppelin::token::erc20::interface::IERC20Dispatcher;
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
+    use starlancer::error::Errors;
+
     #[storage]
     struct Storage {
         token_balances: LegacyMap<ContractAddress, u256>,
@@ -78,7 +80,7 @@ mod treasury_component {
         ) {
             let caller: ContractAddress = get_caller_address();
 
-            assert(self.whitelisted_contributors.read(caller), 'Not whitelisted contributor');
+            assert(self.whitelisted_contributors.read(caller), Errors::NOT_WHITELISTED_CONTRIBUTOR);
 
             let current_token_balance: u256 = self.token_balances.read(token_address);
 
@@ -117,7 +119,7 @@ mod treasury_component {
         TContractState, +HasComponent<TContractState>
     > of TreasuryInternalTrait<TContractState> {
         fn _assert_is_treasury_manager(self: @ComponentState<TContractState>) {
-            assert(self.treasury_managers.read(get_caller_address()), 'Not member manager');
+            assert(self.treasury_managers.read(get_caller_address()), Errors::NOT_TREASURY_MANAGER);
         }
 
         fn _add_treasury_managers(

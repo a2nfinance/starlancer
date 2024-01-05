@@ -8,6 +8,7 @@ trait IDAOJobs<TContractState> {
     fn get_job_by_index(self: @TContractState, index: u32) -> Job;
     fn get_jobs(self: @TContractState, job_index: u32, offset: u32, page_size: u32) -> Array<Job>;
     fn get_job_candidates(self: @TContractState, job_index: u32) -> Array<ContractAddress>;
+    fn get_job_candidate(self: @TContractState, job_index: u32, candidate_index: u32) -> ContractAddress;
     fn apply_job(ref self: TContractState, job_index: u32);
     fn add_job(ref self: TContractState, job: Job);
     fn close_job(ref self: TContractState, job_index: u32);
@@ -20,6 +21,7 @@ mod job_component {
     use starknet::{ContractAddress, get_caller_address};
     use core::{Array, ArrayTrait};
     use starlancer::types::Job;
+    use starlancer::error::Errors;
 
     #[storage]
     struct Storage {
@@ -131,6 +133,10 @@ mod job_component {
             candidates
         }
 
+        fn get_job_candidate(self:@ComponentState<TContractState>, job_index: u32, candidate_index: u32) -> ContractAddress {
+            self.candidates.read((job_index, candidate_index))
+        }
+
         fn apply_job(ref self: ComponentState<TContractState>, job_index: u32) {
             let number_of_candidates: u32 = self.count_job_candidates.read(job_index);
             let mut is_applied: bool = false;
@@ -187,7 +193,7 @@ mod job_component {
         fn close_job(ref self: ComponentState<TContractState>, job_index: u32) {
             self._assert_is_job_manager();
             let job: Job = self.jobs.read(job_index);
-            assert(job.status, 'Not active job');
+            assert(job.status, Errors::NOT_ACTIVE_JOB);
             self
                 .jobs
                 .write(
@@ -216,7 +222,7 @@ mod job_component {
         ) {
             self._assert_is_job_manager();
             let job: Job = self.jobs.read(job_index);
-            assert(!job.status, 'Not close job');
+            assert(!job.status, Errors::NOT_CLOSED_JOB);
             self
                 .jobs
                 .write(
@@ -243,7 +249,7 @@ mod job_component {
         TContractState, +HasComponent<TContractState>
     > of DAOJobsInternalImplTrait<TContractState> {
         fn _assert_is_job_manager(self: @ComponentState<TContractState>) {
-            assert(self.job_managers.read(get_caller_address()), 'Not job manager');
+            assert(self.job_managers.read(get_caller_address()), Errors::NOT_JOB_MANAGER);
         }
 
         fn _add_job_managers(

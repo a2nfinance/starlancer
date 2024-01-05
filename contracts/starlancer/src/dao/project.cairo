@@ -21,6 +21,7 @@ mod project_component {
     use core::traits::Into;
     use starknet::{ContractAddress, get_caller_address};
     use starlancer::types::{Project, Task, TaskStatus, Contract, ContractType};
+    use starlancer::error::Errors;
 
     #[storage]
     struct Storage {
@@ -182,7 +183,7 @@ mod project_component {
             self._assert_is_project_manager();
 
             let project: Project = self.projects.read(project_index);
-            assert(project.status, 'Not active project');
+            assert(project.status, Errors::NOT_ACTIVE_PROJECT);
             self
                 .projects
                 .write(
@@ -206,7 +207,7 @@ mod project_component {
         ) {
             self._assert_is_project_manager();
             let current_project: Project = self.projects.read(project_index);
-            assert(current_project.status, 'Not active project');
+            assert(current_project.status, Errors::NOT_ACTIVE_PROJECT);
 
             self.projects.write(project_index, project);
 
@@ -220,7 +221,7 @@ mod project_component {
             self._assert_is_project_manager();
 
             let project: Project = self.projects.read(project_index);
-            assert(!project.status, 'Not close project');
+            assert(!project.status, Errors::NOT_CLOSED_PROJECT);
 
             self
                 .projects
@@ -261,7 +262,7 @@ mod project_component {
                 TaskStatus::COMPLETE => false,
                 TaskStatus::CANCELLED => false
             };
-            assert(is_allowed, 'Task completed');
+            assert(is_allowed, Errors::TASK_COMPLETED);
             self
                 .project_tasks
                 .write(
@@ -286,18 +287,20 @@ mod project_component {
         TContractState, +HasComponent<TContractState>
     > of DAOProjectInternalImplTrait<TContractState> {
         fn _assert_is_project_manager(self: @ComponentState<TContractState>) {
-            assert(self.project_managers.read(get_caller_address()), 'Not project manager');
+            assert(self.project_managers.read(get_caller_address()), Errors::NOT_PROJECT_MANAGER);
         }
 
         fn _assert_is_task_manager(self: @ComponentState<TContractState>, project_index: u32) {
             assert(
-                self.task_managers.read((project_index, get_caller_address())), 'Not task manager'
+                self.task_managers.read((project_index, get_caller_address())),
+                Errors::NOT_TASK_MANAGER
             );
         }
 
         fn _assert_is_code_reviewer(self: @ComponentState<TContractState>, project_index: u32) {
             assert(
-                self.code_reviewers.read((project_index, get_caller_address())), 'Not task manager'
+                self.code_reviewers.read((project_index, get_caller_address())),
+                Errors::NOT_CODE_REVIEWER
             );
         }
 
@@ -307,7 +310,7 @@ mod project_component {
                 self.project_managers.read(caller_address)
                     || self.code_reviewers.read((project_index, caller_address))
                     || self.task_managers.read((project_index, caller_address)),
-                'Not allow changing status'
+                Errors::NOT_ALLOW_CHANGING_STATUS
             );
         }
 
@@ -354,7 +357,7 @@ mod project_component {
             self._assert_is_task_manager(project_index);
             let project: Project = self.projects.read(project_index);
 
-            assert(project.status, 'Not active project');
+            assert(project.status, Errors::NOT_ACTIVE_PROJECT);
             let count_project_tasks: u32 = self.count_project_tasks.read(project_index);
             let count_member_tasks: u32 = self.count_member_tasks.read(assignee);
 

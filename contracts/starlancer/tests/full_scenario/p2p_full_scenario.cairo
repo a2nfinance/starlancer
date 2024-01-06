@@ -245,9 +245,9 @@ fn test_p2p_marketplace() {
     println!("5. The employer create a task");
     // employer1 creates task
     create_task(p2p_dispatcher, p2p_task_dispatcher, p2p_address, caller, 0, 0);
-    // employer1 creates task
+    // employer2 creates task
     create_task(p2p_dispatcher, p2p_task_dispatcher, p2p_address, job_manager, 0, 1);
-    
+
     println!("6. The employer change a task status");
 
     change_task_status(p2p_dispatcher, p2p_task_dispatcher, p2p_address, caller);

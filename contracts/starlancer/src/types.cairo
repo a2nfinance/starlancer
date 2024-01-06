@@ -23,9 +23,9 @@ struct Job {
     creator: ContractAddress,
     start_date: u128,
     end_date: u128,
-    title: felt252,
-    short_description: felt252,
-    job_detail: felt252,
+    title: TextStruct,
+    short_description: TextStruct,
+    job_detail: TextStruct,
     // true: open, false: closed,
     job_type: ContractType,
     fixed_price: u256,
@@ -39,9 +39,9 @@ struct Project {
     creator: ContractAddress,
     start_date: u128,
     end_date: u128,
-    title: felt252,
-    short_description: felt252,
-    project_detail: felt252,
+    title: TextStruct,
+    short_description: TextStruct,
+    project_detail: TextStruct,
     // true: active, false: closed
     status: bool
 }
@@ -51,9 +51,9 @@ struct Task {
     creator: ContractAddress,
     start_date: u128,
     deadline: u128,
-    title: felt252,
-    short_description: felt252,
-    task_detail: felt252,
+    title: TextStruct,
+    short_description: TextStruct,
+    task_detail: TextStruct,
     // hours
     estimate: u16,
     status: TaskStatus,
@@ -94,8 +94,18 @@ struct DAOStatistics {
 
 #[derive(Copy, Drop, Serde, starknet::Store)]
 struct DAODetail {
-    name: felt252,
-    short_description: felt252,
-    detail: felt252,
-    social_networks: felt252
+    name: TextStruct,
+    short_description: TextStruct,
+    detail: TextStruct,
+    social_networks: TextStruct
 }
+#[derive(Copy, Drop, Serde, starknet::Store)]
+struct TextStruct {
+    text0: felt252,
+    text1: felt252,
+    text2: felt252,
+    text3: felt252,
+    text4: felt252,
+    text5: felt252,
+}
+

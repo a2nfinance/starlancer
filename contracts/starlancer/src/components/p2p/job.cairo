@@ -22,7 +22,7 @@ trait IP2PJob<TContractState> {
 }
 #[starknet::component]
 mod job_component {
-    use starlancer::p2p::job::IP2PJob;
+
     use starknet::{ContractAddress, get_caller_address};
     use starlancer::types::{Job};
     use starlancer::error::Errors;

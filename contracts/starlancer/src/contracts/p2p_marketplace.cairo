@@ -14,8 +14,8 @@ mod P2PJobsMarketplace {
     use openzeppelin::token::erc20::interface::IERC20DispatcherTrait;
     use starknet::{ContractAddress, get_caller_address};
     use starlancer::types::{Job, Task, TaskStatus};
-    use starlancer::p2p::job::job_component;
-    use starlancer::p2p::task::task_component;
+    use starlancer::components::p2p::job::job_component;
+    use starlancer::components::p2p::task::task_component;
     use openzeppelin::token::erc20::interface::IERC20Dispatcher;
 
     component!(path: job_component, storage: p2p_jobs, event: P2PJobEvent);

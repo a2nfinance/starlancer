@@ -29,10 +29,10 @@ trait IDAO<TContractState> {
 #[starknet::contract]
 mod DAO {
     use starknet::{ContractAddress, get_caller_address};
-    use starlancer::dao::member::member_component;
-    use starlancer::dao::job::job_component;
-    use starlancer::dao::project::project_component;
-    use starlancer::dao::treasury::treasury_component;
+    use starlancer::components::dao::member::member_component;
+    use starlancer::components::dao::job::job_component;
+    use starlancer::components::dao::project::project_component;
+    use starlancer::components::dao::treasury::treasury_component;
     use starlancer::types::{
         Job, Contract, Project, Task, MemberRoles, ProjectRoles, DAOStatistics, DAODetail
     };

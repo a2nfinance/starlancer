@@ -8,7 +8,6 @@ trait IP2PTask<TContractState> {
 #[starknet::component]
 mod task_component {
     use starknet::{get_caller_address, ContractAddress};
-    use starlancer::p2p::task::IP2PTask;
     use starlancer::types::{Task, Job, TaskStatus, ContractType};
     use starlancer::error::Errors;
 

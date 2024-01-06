@@ -1,5 +1,6 @@
 use starknet::ContractAddress;
 use starlancer::types::{Job};
+
 #[starknet::interface]
 trait IP2PJob<TContractState> {
     fn get_job_by_index(self: @TContractState, job_index: u32) -> Job;
@@ -14,15 +15,23 @@ trait IP2PJob<TContractState> {
     fn get_job_candidates_by_local_index(
         self: @TContractState, employer: ContractAddress, local_job_index: u32
     ) -> Array<ContractAddress>;
+
+    fn get_accepted_candidate(
+        self: @TContractState, employer: ContractAddress, local_job_index: u32
+    ) -> ContractAddress;
+
+    fn get_accepted_candidate_by_global_index(
+        self: @TContractState, employer: ContractAddress, job_index: u32
+    ) -> ContractAddress;
     fn apply_job(ref self: TContractState, job_index: u32);
     fn add_job(ref self: TContractState, job: Job);
     fn close_job(ref self: TContractState, local_job_index: u32);
     fn reopen_job(ref self: TContractState, local_job_index: u32, start_date: u128, end_date: u128);
     fn accept_candidate(ref self: TContractState, local_job_index: u32, candidate_index: u32);
 }
+
 #[starknet::component]
 mod job_component {
-
     use starknet::{ContractAddress, get_caller_address};
     use starlancer::types::{Job};
     use starlancer::error::Errors;
@@ -41,7 +50,9 @@ mod job_component {
         // employer, number of jobs
         count_employer_jobs: LegacyMap::<ContractAddress, u32>,
         // employer, local job index, index of an accepted candidate
-        accepted_candidate: LegacyMap<(ContractAddress, u32), u32>
+        accepted_candidate: LegacyMap<(ContractAddress, u32), u32>,
+        // golbal_job_index, accepted_candidate index
+        job_accepted_candidate: LegacyMap<u32, ContractAddress>
     }
 
     #[event]
@@ -100,6 +111,23 @@ mod job_component {
         ) -> Job {
             let (_, job): (u32, Job) = self._get_job_from_local_index(employer, local_job_index);
             job
+        }
+
+        fn get_accepted_candidate(
+            self: @ComponentState<TContractState>, employer: ContractAddress, local_job_index: u32
+        ) -> ContractAddress {
+            let candidate_index = self.accepted_candidate.read((employer, local_job_index));
+
+            let global_job_index = self.employer_jobs.read((employer, local_job_index));
+
+            self.candidates.read((global_job_index, candidate_index))
+        }
+
+
+        fn get_accepted_candidate_by_global_index(
+            self:  @ComponentState<TContractState>, employer: ContractAddress, job_index: u32
+        ) -> ContractAddress {
+            self.job_accepted_candidate.read(job_index)
         }
 
         fn get_jobs(
@@ -226,6 +254,7 @@ mod job_component {
             self.count_job.write(count_job + 1);
             self.count_employer_jobs.write(get_caller_address(), count_employer_jobs + 1);
         }
+
         fn close_job(ref self: ComponentState<TContractState>, local_job_index: u32) {
             self._assert_is_employer(local_job_index);
             let (global_index, job): (u32, Job) = self
@@ -252,6 +281,7 @@ mod job_component {
                     }
                 )
         }
+
         fn reopen_job(
             ref self: ComponentState<TContractState>,
             local_job_index: u32,
@@ -284,11 +314,14 @@ mod job_component {
                     }
                 )
         }
+
         fn accept_candidate(
             ref self: ComponentState<TContractState>, local_job_index: u32, candidate_index: u32
         ) {
             self._assert_is_employer(local_job_index);
+            let global_job_index: u32 = self.employer_jobs.read((get_caller_address(), local_job_index));
             self.accepted_candidate.write((get_caller_address(), local_job_index), candidate_index);
+            self.job_accepted_candidate.write(global_job_index, self.candidates.read((global_job_index, candidate_index)));
         }
     }
 
@@ -296,6 +329,7 @@ mod job_component {
     impl P2PJobInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of P2PJobInternalImplTrait<TContractState> {
+
         fn _get_job_from_local_index(
             self: @ComponentState<TContractState>, employer: ContractAddress, local_job_index: u32
         ) -> (u32, Job,) {
@@ -303,11 +337,13 @@ mod job_component {
             let job: Job = self.jobs.read(global_job_index);
             (global_job_index, job,)
         }
+
         fn _assert_is_employer(self: @ComponentState<TContractState>, local_job_index: u32) {
             let (_, job): (u32, Job) = self
                 ._get_job_from_local_index(get_caller_address(), local_job_index);
 
             assert(job.creator == get_caller_address(), Errors::NOT_EMPLOYER);
         }
+        
     }
 }

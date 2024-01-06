@@ -151,11 +151,11 @@ mod project_component {
             let mut j: u32 = 0;
             let len_code_reviewer: u32 = code_reviewers.len();
             loop {
-                if (i >= len_code_reviewer) {
+                if (j >= len_code_reviewer) {
                     break;
                 }
-                self.code_reviewers.write((count_project, *code_reviewers.at(i)), true);
-                i += 1;
+                self.code_reviewers.write((count_project, *code_reviewers.at(j)), true);
+                j += 1;
             };
             self.count_project.write(count_project + 1);
             self

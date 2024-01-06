@@ -25,6 +25,8 @@ mod job_component {
     use starlancer::p2p::job::IP2PJob;
     use starknet::{ContractAddress, get_caller_address};
     use starlancer::types::{Job};
+    use starlancer::error::Errors;
+
     #[storage]
     struct Storage {
         // global job index, job
@@ -96,8 +98,7 @@ mod job_component {
         fn get_job_by_local_index(
             self: @ComponentState<TContractState>, employer: ContractAddress, local_job_index: u32
         ) -> Job {
-            let (_, job): (u32, Job) = self
-                ._get_job_from_local_index(employer, local_job_index);
+            let (_, job): (u32, Job) = self._get_job_from_local_index(employer, local_job_index);
             job
         }
 
@@ -230,7 +231,7 @@ mod job_component {
             let (global_index, job): (u32, Job) = self
                 ._get_job_from_local_index(get_caller_address(), local_job_index);
 
-            assert(job.status, 'Not active job');
+            assert(job.status, Errors::NOT_ACTIVE_JOB);
 
             self
                 .jobs
@@ -262,7 +263,7 @@ mod job_component {
             let (global_index, job): (u32, Job) = self
                 ._get_job_from_local_index(get_caller_address(), local_job_index);
 
-            assert(!job.status, 'Not close job');
+            assert(!job.status, Errors::NOT_CLOSED_JOB);
 
             self
                 .jobs
@@ -306,7 +307,7 @@ mod job_component {
             let (_, job): (u32, Job) = self
                 ._get_job_from_local_index(get_caller_address(), local_job_index);
 
-            assert(job.creator == get_caller_address(), 'Not employer');
+            assert(job.creator == get_caller_address(), Errors::NOT_EMPLOYER);
         }
     }
 }

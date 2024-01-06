@@ -12,6 +12,7 @@ starknet = "2.4.1"
 
 [[target.starknet-contract]]
 casm = true
+allowed-libfuncs-list.name = "experimental"
 
 [[tool.snforge.fork]]
 name = "GoerliFork"

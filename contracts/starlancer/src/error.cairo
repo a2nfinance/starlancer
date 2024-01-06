@@ -3,12 +3,12 @@ mod Errors {
     const NOT_CLOSED_JOB: felt252 = 'Not closed job';
     const NOT_JOB_MANAGER: felt252 = 'Not job manager';
     const NOT_EMPLOYER: felt252 = 'Not employer';
-    
+
     const MEMBER_EXISTED: felt252 = 'Member existed';
     const MEMBER_NOT_ACTIVE: felt252 = 'Member is not active';
     const NOT_MEMBER_MANAGER: felt252 = 'Not member manager';
     const NOT_MEMBER: felt252 = 'Not member';
-    
+
     const NOT_PROJECT_MANAGER: felt252 = 'Not project manager';
     const NOT_TASK_MANAGER: felt252 = 'Not task manager';
     const NOT_CODE_REVIEWER: felt252 = 'Not code reviewer';
@@ -26,4 +26,5 @@ mod Errors {
 
     const FAIL_TO_CREATE_DAO: felt252 = 'Fail to create DAO';
     const NOT_DAO_FACTORY_ONWER: felt252 = 'Not dao factory owner';
+    const HAS_NO_CONTRACT: felt252 = 'Has no contract';
 }

@@ -10,7 +10,13 @@ trait IDAO<TContractState> {
         ref self: TContractState, assignee: ContractAddress, project_index: u32, task: Task
     );
 
-    fn accept_candidate(ref self: TContractState, job_index: u32, candidate_index: u32, start_date: u128, end_date: u128);
+    fn accept_candidate(
+        ref self: TContractState,
+        job_index: u32,
+        candidate_index: u32,
+        start_date: u128,
+        end_date: u128
+    );
 
     fn get_member_roles(self: @TContractState, address: ContractAddress) -> MemberRoles;
     fn get_project_roles(
@@ -109,23 +115,30 @@ mod DAO {
         }
 
         fn pay_member(ref self: ContractState, member_index: u32) {
-            let current_contract: Contract = DAOMemberImpl::get_member_current_contract(
+            let current_contract: Option<Contract> = DAOMemberImpl::get_member_current_contract(
                 @self, member_index
             );
 
-            let member_address: ContractAddress = DAOMemberImpl::get_member_by_index(
-                @self, member_index
-            );
+            match current_contract {
+                Option::Some(contract) => {
+                    let member_address: ContractAddress = DAOMemberImpl::get_member_by_index(
+                        @self, member_index
+                    );
 
-            // Calculate billing here
-            let billing_amount: u256 = DAOProjectInternalImpl::_calculate_billing(
-                ref self.dao_projects, member_address, current_contract
-            );
-            // Do payment
+                    // Calculate billing here
+                    let billing_amount: u256 = DAOProjectInternalImpl::_calculate_billing(
+                        ref self.dao_projects, member_address, contract
+                    );
+                    // Do payment
 
-            DAOTreasuryImpl::pay(
-                ref self, member_address, current_contract.pay_by_token, billing_amount
-            );
+                    DAOTreasuryImpl::pay(
+                        ref self, member_address, contract.pay_by_token, billing_amount
+                    );
+                },
+                Option::None => {
+                    assert(false, Errors::HAS_NO_CONTRACT);
+                }
+            }
         }
 
         fn create_assign_task(
@@ -137,13 +150,22 @@ mod DAO {
             );
         }
 
-        fn accept_candidate(ref self: ContractState, job_index: u32, candidate_index: u32, start_date: u128, end_date: u128) {
+        fn accept_candidate(
+            ref self: ContractState,
+            job_index: u32,
+            candidate_index: u32,
+            start_date: u128,
+            end_date: u128
+        ) {
             let job: Job = DAOJobsImpl::get_job_by_index(@self, job_index);
 
-            let candidate: ContractAddress = DAOJobsImpl::get_job_candidate(@self, job_index, candidate_index);
+            let candidate: ContractAddress = DAOJobsImpl::get_job_candidate(
+                @self, job_index, candidate_index
+            );
 
-            DAOMemberInternalImpl::_add_member(ref self.members, candidate, job, start_date, end_date);
-
+            DAOMemberInternalImpl::_add_member(
+                ref self.members, candidate, job, start_date, end_date
+            );
         }
         fn get_member_roles(self: @ContractState, address: ContractAddress) -> MemberRoles {
             let is_job_manager: bool = self.dao_jobs.job_managers.read(address);

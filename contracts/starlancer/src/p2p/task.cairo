@@ -10,6 +10,8 @@ mod task_component {
     use starknet::{get_caller_address, ContractAddress};
     use starlancer::p2p::task::IP2PTask;
     use starlancer::types::{Task, Job, TaskStatus, ContractType};
+    use starlancer::error::Errors;
+
     #[storage]
     struct Storage {
         // global_job_index, index of a task of a job, task
@@ -65,8 +67,6 @@ mod task_component {
 
             tasks
         }
-
-        
     }
 
     #[generate_trait]
@@ -202,7 +202,7 @@ mod task_component {
                 TaskStatus::COMPLETE => false,
                 TaskStatus::CANCELLED => false
             };
-            assert(allow_change_status, 'Not allow change status');
+            assert(allow_change_status, Errors::NOT_ALLOW_CHANGING_STATUS);
             self
                 .job_tasks
                 .write(

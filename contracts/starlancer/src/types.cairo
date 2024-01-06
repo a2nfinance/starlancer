@@ -13,12 +13,6 @@ enum TaskStatus {
 }
 
 #[derive(Copy, Drop, Serde, starknet::Store)]
-enum TaskType {
-    FIXED_PRICE,
-    HOURY
-}
-
-#[derive(Copy, Drop, Serde, starknet::Store)]
 enum ContractType {
     FIXED_PRICE,
     HOURY

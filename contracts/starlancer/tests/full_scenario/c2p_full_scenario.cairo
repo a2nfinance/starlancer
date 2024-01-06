@@ -1,11 +1,11 @@
-use starlancer::dao::project::IDAOProjectDispatcherTrait;
+use starlancer::components::dao::project::IDAOProjectDispatcherTrait;
 use core::option::OptionTrait;
-use starlancer::dao::member::IMemberDispatcherTrait;
-use starlancer::dao::treasury::ITreasuryDispatcherTrait;
+use starlancer::components::dao::member::IMemberDispatcherTrait;
+use starlancer::components::dao::treasury::ITreasuryDispatcherTrait;
 use core::traits::Into;
-use starlancer::dao_contract::IDAODispatcherTrait;
-use starlancer::dao_factory::IDAOFactoryDispatcherTrait;
-use starlancer::dao::job::IDAOJobsDispatcherTrait;
+use starlancer::contracts::dao_contract::IDAODispatcherTrait;
+use starlancer::contracts::dao_factory::IDAOFactoryDispatcherTrait;
+use starlancer::components::dao::job::IDAOJobsDispatcherTrait;
 use core::serde::Serde;
 use snforge_std::{
     declare, ContractClassTrait, start_prank, stop_prank, start_warp, stop_warp, env::var,
@@ -16,15 +16,15 @@ use super::super::utils::mock_data::{
     get_mock_addresses, get_mock_whitelisted_contributors, get_mock_dev_accounts,
     get_mock_project_roles
 };
-use starlancer::dao_factory::IDAOFactoryDispatcher;
-use starlancer::dao_contract::IDAODispatcher;
-use starlancer::dao::job::IDAOJobsDispatcher;
-use starlancer::dao::treasury::ITreasuryDispatcher;
-use starlancer::dao::project::IDAOProjectDispatcher;
-use starlancer::dao::member::IMemberDispatcher;
+use starlancer::contracts::dao_factory::IDAOFactoryDispatcher;
+use starlancer::contracts::dao_contract::IDAODispatcher;
+use starlancer::components::dao::job::IDAOJobsDispatcher;
+use starlancer::components::dao::treasury::ITreasuryDispatcher;
+use starlancer::components::dao::project::IDAOProjectDispatcher;
+use starlancer::components::dao::member::IMemberDispatcher;
 
 use starlancer::types::{
-    DAODetail, MemberRoles, Job, ContractType, Contract, Project, Task, TaskStatus
+    DAODetail, MemberRoles, Job, ContractType, Contract, Project, Task, TaskStatus, TextStruct
 };
 
 // ERC 20
@@ -44,7 +44,9 @@ use openzeppelin::token::erc20::interface::IERC20Dispatcher;
 // 8. Create a new task and assign to dev
 // 9. Change task status to completes (By code reviewer)
 // 10. Pay dev by a treasury manager
-
+fn get_textstruct_test(value: felt252) -> TextStruct {
+    TextStruct {text0: value, text1: '', text2: '', text3: '', text4: '', text5: ''}
+}
 fn deploy_mock_erc20() -> ContractAddress {
     let (caller, _, _, _, _) = get_mock_addresses();
     let erc20_contract = declare('MockERC20');
@@ -91,10 +93,10 @@ fn create_dao(dao_factory_address: ContractAddress) -> ContractAddress {
     let deployed_contract = dao_factory_dispatcher
         .create_dao(
             DAODetail {
-                name: 'Test DAO',
-                detail: 'https://google.com',
-                short_description: 'Short description',
-                social_networks: 'social networks',
+                name: get_textstruct_test('Test DAO'),
+                detail: get_textstruct_test('https://google.com'),
+                short_description: get_textstruct_test('Short description'),
+                social_networks: get_textstruct_test('social networks'),
             },
             array![treasury_manager],
             array![member_manager],
@@ -158,9 +160,9 @@ fn create_job(
                 creator: job_manager,
                 start_date: 0,
                 end_date: 100000,
-                title: 'Test job',
-                short_description: 'Test description',
-                job_detail: 'Test detail',
+                title: get_textstruct_test('Test job'),
+                short_description: get_textstruct_test('Test description'),
+                job_detail: get_textstruct_test('Test detail'),
                 pay_by_token: erc20_contract_address,
                 job_type: ContractType::HOURY,
                 fixed_price: 0,
@@ -172,7 +174,7 @@ fn create_job(
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
 
     let job: Job = dao_job_dispatcher.get_job_by_index(0);
-    assert(job.title == 'Test job', 'Fail to create job');
+    assert(job.title.text0 == 'Test job', 'Fail to create job');
     job
 }
 
@@ -222,16 +224,16 @@ fn create_project(
                 creator: project_manager,
                 start_date: 0,
                 end_date: 100000000,
-                title: 'Test project',
-                short_description: 'Test project short description',
-                project_detail: 'Test project detail',
+                title: get_textstruct_test('Test project'),
+                short_description: get_textstruct_test('Test project short description'),
+                project_detail: get_textstruct_test('Test project detail'),
                 status: true
             }
         );
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
 
     let project: Project = dao_project_dispatcher.get_project(0);
-    assert(project.title == 'Test project', 'Fail to create project');
+    assert(project.title.text0 == 'Test project', 'Fail to create project');
 }
 
 fn create_and_asign_task(
@@ -250,9 +252,9 @@ fn create_and_asign_task(
                 creator: task_manager,
                 start_date: 0,
                 deadline: 100000000,
-                title: 'New Task',
-                short_description: 'Task short description',
-                task_detail: 'Task detail url',
+                title: get_textstruct_test('New Task'),
+                short_description: get_textstruct_test('Task short description'),
+                task_detail: get_textstruct_test('Task detail url'),
                 status: TaskStatus::OPEN,
                 estimate: 3
             }
@@ -306,7 +308,7 @@ fn pay_member(
 }
 
 #[test]
-fn test_c2p_full_scenario() {
+fn test_c2p() {
     println!("========================================================================");
     println!("0. Deploy a mock ERC 20 token");
     let (caller, treasury_manager, member_manager, project_manager, job_manager) =
@@ -341,7 +343,7 @@ fn test_c2p_full_scenario() {
     let dao_dispatcher: IDAODispatcher = IDAODispatcher { contract_address: dao_address };
     let dao_detail: DAODetail = dao_dispatcher.get_dao_detail();
 
-    assert(dao_detail.name == 'Test DAO', 'Not create DAO success');
+    assert(dao_detail.name.text0 == 'Test DAO', 'Not create DAO success');
 
     let dao_job_dispatcher: IDAOJobsDispatcher = IDAOJobsDispatcher {
         contract_address: dao_address

@@ -56,8 +56,8 @@ mod DAOFactory {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, dao_hash: ClassHash) {
-        self.owner.write(get_caller_address());
+    fn constructor(ref self: ContractState, dao_hash: ClassHash, owner: ContractAddress) {
+        self.owner.write(owner);
         self.dao_hash.write(dao_hash);
     }
 

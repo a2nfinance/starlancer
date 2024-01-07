@@ -1,3 +1,4 @@
+import { WalletBar } from "@/components/common/WalletBar";
 import { Button, Card, Col, Image, Row } from "antd";
 
 import { Typography } from 'antd';
@@ -11,8 +12,7 @@ export default function Index() {
 
     return (
         <div style={{ maxWidth: 1000, margin: "auto", padding: 10 }}>
-            
-
+          
         </div>
     )
 }

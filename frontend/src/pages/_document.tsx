@@ -4,9 +4,9 @@ export default function Document() {
     return (
         <Html lang='en'>
             <Head>
-                <title>Starlancer - Starknet</title>
+                <title>Starlancer</title>
                 <meta name="title" content="Starlancer" />
-                <meta name="description" content="A Freelancer Marketplace for every one on Starknet"/>
+                <meta name="description" content="Starlancer"/>
                 <link rel="icon" type="image/x-icon" href="/favicon.ico" />
                 <link
                     rel="stylesheet"

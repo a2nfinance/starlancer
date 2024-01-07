@@ -73,6 +73,7 @@ fn deploy_dao_factory() -> ContractAddress {
     let mut calldata = ArrayTrait::new();
 
     dao_contract_hash.serialize(ref calldata);
+    caller.serialize(ref calldata);
 
     let contract_address = dao_factory_contract.precalculate_address(@calldata);
 

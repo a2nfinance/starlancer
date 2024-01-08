@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 
 #[starknet::contract]
-mod PlatformToken {
+mod StarlancerToken {
     use openzeppelin::token::erc20::ERC20Component;
     use starknet::ContractAddress;
 

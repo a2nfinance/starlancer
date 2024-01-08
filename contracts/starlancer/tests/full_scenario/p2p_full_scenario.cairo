@@ -5,7 +5,7 @@ use snforge_std::{
 use starknet::{ContractAddress, get_contract_address, ClassHash};
 use super::super::utils::mock_data::{
     get_mock_addresses, get_mock_whitelisted_contributors, get_mock_dev_accounts,
-    get_mock_project_roles
+    get_mock_project_roles, get_mock_platform_fee_roles
 };
 
 use starlancer::contracts::p2p_marketplace::IP2PJobsMarketplaceDispatcher;
@@ -25,13 +25,14 @@ use openzeppelin::token::erc20::interface::IERC20DispatcherTrait;
 use openzeppelin::token::erc20::interface::IERC20Dispatcher;
 
 // 0. Deploy mock ERC20-Token
-// 1. Deploy p2p marketplace contract
-// 2. An employer creates a job
-// 3. An user applies to a job
-// 4. The employer accepts the candidate
-// 5. The employer create a task
-// 6. The employer change a task status
-// 7. The employer pay dev
+// 1. Deploy platform fee
+// 2. Deploy p2p marketplace contract
+// 3. An employer creates a job
+// 4. An user applies to a job
+// 5. The employer accepts the candidate
+// 6. The employer create a task
+// 7. The employer change a task status
+// 8. The employer pay dev
 
 fn get_textstruct_test(value: felt252) -> TextStruct {
     TextStruct { text0: value, text1: '', text2: '', text3: '', text4: '', text5: '' }
@@ -40,7 +41,7 @@ fn get_textstruct_test(value: felt252) -> TextStruct {
 fn deploy_mock_erc20(caller: ContractAddress) -> ContractAddress {
     let erc20_contract = declare('MockERC20');
     let mut calldata = ArrayTrait::new();
-    let initital_supply: u256 = 2000_u256;
+    let initital_supply: u256 = 2000_000_000_000_000_000_000_000_000_u256;
     initital_supply.serialize(ref calldata);
     caller.serialize(ref calldata);
 
@@ -53,10 +54,33 @@ fn deploy_mock_erc20(caller: ContractAddress) -> ContractAddress {
     deployed_contract
 }
 
+fn deploy_platform_fee() -> ContractAddress {
+    let (caller, _, _, _, _) = get_mock_addresses();
+    let (admin, fee_recipient) = get_mock_platform_fee_roles();
+    let rate_fee: u16 = 50;
+    let platform_fee_contract = declare('PlatformFee');
 
-fn deploy_p2p_marketplace(caller: ContractAddress) -> ContractAddress {
+    let mut calldata = ArrayTrait::new();
+    rate_fee.serialize(ref calldata);
+    admin.serialize(ref calldata);
+    fee_recipient.serialize(ref calldata);
+
+    let contract_address = platform_fee_contract.precalculate_address(@calldata);
+
+    start_prank(cheatcodes::CheatTarget::One(contract_address), caller);
+    let deployed_contract = platform_fee_contract.deploy(@calldata).unwrap();
+    stop_prank(cheatcodes::CheatTarget::One(contract_address));
+
+    deployed_contract
+}
+
+
+fn deploy_p2p_marketplace(
+    caller: ContractAddress, platform_fee: ContractAddress
+) -> ContractAddress {
     let p2p_jobs_marketplace = declare('P2PJobsMarketplace');
     let mut calldata = ArrayTrait::new();
+    platform_fee.serialize(ref calldata);
 
     let contract_address = p2p_jobs_marketplace.precalculate_address(@calldata);
 
@@ -87,7 +111,7 @@ fn create_a_job(
                 pay_by_token: erc20_contract_address,
                 job_type: ContractType::HOURY,
                 fixed_price: 0,
-                hourly_rate: 1_u256,
+                hourly_rate: 10000_u256,
                 status: true
             }
         );
@@ -191,10 +215,12 @@ fn pay_dev(
     p2p_address: ContractAddress,
     erc20_contract_address: ContractAddress,
     employer: ContractAddress,
-    dev1: ContractAddress
+    dev1: ContractAddress,
+    platform_fee: ContractAddress
 ) {
     start_prank(cheatcodes::CheatTarget::One(erc20_contract_address), employer);
-    erc20_dispatcher.approve(p2p_address, 3_u256);
+    let total_amount: u256 = p2p_dispatcher.get_job_payment_amount(0);
+    erc20_dispatcher.approve(p2p_address, total_amount);
     stop_prank(cheatcodes::CheatTarget::One(erc20_contract_address));
 
     start_prank(cheatcodes::CheatTarget::One(p2p_address), employer);
@@ -202,7 +228,10 @@ fn pay_dev(
     stop_prank(cheatcodes::CheatTarget::One(p2p_address));
 
     let dev1_balance: u256 = erc20_dispatcher.balance_of(dev1);
-    assert(dev1_balance == 3_u256, 'Not paid success');
+    let platform_fee_balance: u256 = erc20_dispatcher.balance_of(platform_fee);
+    assert(
+        dev1_balance == 30000_u256 && platform_fee_balance == 30000 * 50 / 10000, 'Not paid success'
+    );
 }
 
 
@@ -218,9 +247,12 @@ fn test_p2p_marketplace() {
         contract_address: erc20_contract_address
     };
 
-    println!("1. Deploy p2p marketplace contract");
+    println!("1. Deploy platform fee");
 
-    let p2p_address: ContractAddress = deploy_p2p_marketplace(caller);
+    let platform_fee_address = deploy_platform_fee();
+    println!("2. Deploy p2p marketplace contract");
+
+    let p2p_address: ContractAddress = deploy_p2p_marketplace(caller, platform_fee_address);
 
     let p2p_dispatcher: IP2PJobsMarketplaceDispatcher = IP2PJobsMarketplaceDispatcher {
         contract_address: p2p_address
@@ -229,31 +261,39 @@ fn test_p2p_marketplace() {
     let p2p_task_dispatcher: IP2PTaskDispatcher = IP2PTaskDispatcher {
         contract_address: p2p_address
     };
-    println!("2. An employer creates a job");
+    println!("3. An employer creates a job");
     // employer1 creates job
     create_a_job(p2p_job_dispatcher, caller, erc20_contract_address, p2p_address, 0);
     // employer2 creates job 
     create_a_job(p2p_job_dispatcher, job_manager, erc20_contract_address, p2p_address, 1);
 
-    println!("3. An user applies to a job");
+    println!("4. An user applies to a job");
     apply_job(p2p_job_dispatcher, p2p_address, dev1, 0);
 
-    println!("4. The employer accepts the candidate");
+    println!("5. The employer accepts the candidate");
 
     accept_candidate(p2p_job_dispatcher, p2p_address, 0, 0, caller, dev1);
 
-    println!("5. The employer create a task");
+    println!("6. The employer create a task");
     // employer1 creates task
     create_task(p2p_dispatcher, p2p_task_dispatcher, p2p_address, caller, 0, 0);
     // employer2 creates task
     create_task(p2p_dispatcher, p2p_task_dispatcher, p2p_address, job_manager, 0, 1);
 
-    println!("6. The employer change a task status");
+    println!("7. The employer change a task status");
 
     change_task_status(p2p_dispatcher, p2p_task_dispatcher, p2p_address, caller);
 
-    println!("7. The employer pay dev");
+    println!("8. The employer pay dev");
 
-    pay_dev(erc20_dispatcher, p2p_dispatcher, p2p_address, erc20_contract_address, caller, dev1);
+    pay_dev(
+        erc20_dispatcher,
+        p2p_dispatcher,
+        p2p_address,
+        erc20_contract_address,
+        caller,
+        dev1,
+        platform_fee_address
+    );
     println!("========================================================================");
 }

@@ -28,3 +28,9 @@ fn get_mock_project_roles() -> (ContractAddress, ContractAddress) {
     let code_reviewer: ContractAddress = starknet::contract_address_const::<0x11>();
     return (task_manager, code_reviewer);
 }
+
+fn get_mock_platform_fee_roles() -> (ContractAddress, ContractAddress) {
+    let admin: ContractAddress = starknet::contract_address_const::<0x12>();
+    let fee_recipient: ContractAddress = starknet::contract_address_const::<0x13>();
+    return (admin, fee_recipient);
+}

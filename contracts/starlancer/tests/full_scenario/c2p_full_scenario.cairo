@@ -14,7 +14,8 @@ use snforge_std::{
 use starknet::{ContractAddress, get_contract_address, ClassHash};
 use super::super::utils::mock_data::{
     get_mock_addresses, get_mock_whitelisted_contributors, get_mock_dev_accounts,
-    get_mock_project_roles
+    get_mock_project_roles,
+    get_mock_platform_fee_roles
 };
 use starlancer::contracts::dao_factory::IDAOFactoryDispatcher;
 use starlancer::contracts::dao_contract::IDAODispatcher;
@@ -34,16 +35,18 @@ use openzeppelin::token::erc20::interface::IERC20Dispatcher;
 
 // This test does steps:
 // 0. Deploy a mock ERC-20 token
-// 1. Deploy a DAO factory
-// 2. Create a new DAO using DAOFactory
-// 3. Fund DAO treasury
-// 4. Create a new job
-// 5. Apply job, the user becomes a candidate
-// 6. Accept candidate, user become a DAO member with a contract
-// 7. Create a project by project manager
-// 8. Create a new task and assign to dev
-// 9. Change task status to completes (By code reviewer)
-// 10. Pay dev by a treasury manager
+// 1. Deploy platform fee
+// 2. Deploy a DAO factory
+// 3. Create a new DAO using DAOFactory
+// 4. Fund DAO treasury
+// 5. Create a new job
+// 6. Apply job, the user becomes a candidate
+// 7. Accept candidate, user become a DAO member with a contract
+// 8. Create a project by project manager
+// 9. Create a new task and assign to dev
+// 10. Change task status to completes (By code reviewer)
+// 11. Pay dev by a treasury manager
+
 fn get_textstruct_test(value: felt252) -> TextStruct {
     TextStruct {text0: value, text1: '', text2: '', text3: '', text4: '', text5: ''}
 }
@@ -51,8 +54,8 @@ fn deploy_mock_erc20() -> ContractAddress {
     let (caller, _, _, _, _) = get_mock_addresses();
     let erc20_contract = declare('MockERC20');
     let mut calldata = ArrayTrait::new();
-    let initital_supply: u256 = 2000_u256;
-    initital_supply.serialize(ref calldata);
+    let initial_supply: u256 = 2000_000_000_000_000_000_000_000_000_u256;
+    initial_supply.serialize(ref calldata);
     caller.serialize(ref calldata);
 
     let contract_address = erc20_contract.precalculate_address(@calldata);
@@ -64,8 +67,29 @@ fn deploy_mock_erc20() -> ContractAddress {
     deployed_contract
 }
 
+fn deploy_platform_fee() -> ContractAddress {
+    let (caller, _, _, _, _) = get_mock_addresses();
+    let (admin, fee_recipient) = get_mock_platform_fee_roles();
+    let rate_fee: u16 = 50;
+    let platform_fee_contract = declare('PlatformFee');
 
-fn deploy_dao_factory() -> ContractAddress {
+    let mut calldata = ArrayTrait::new();
+    rate_fee.serialize(ref calldata);
+    admin.serialize(ref calldata);
+    fee_recipient.serialize(ref calldata);
+
+    let contract_address = platform_fee_contract.precalculate_address(@calldata);
+
+    start_prank(cheatcodes::CheatTarget::One(contract_address), caller);
+    let deployed_contract = platform_fee_contract.deploy(@calldata).unwrap();
+    stop_prank(cheatcodes::CheatTarget::One(contract_address));
+
+    deployed_contract
+}
+
+
+
+fn deploy_dao_factory(platform_fee: ContractAddress) -> ContractAddress {
     let (caller, _, _, _, _) = get_mock_addresses();
     let dao_factory_contract = declare('DAOFactory');
     let dao_contract = declare('DAO');
@@ -74,6 +98,7 @@ fn deploy_dao_factory() -> ContractAddress {
 
     dao_contract_hash.serialize(ref calldata);
     caller.serialize(ref calldata);
+    platform_fee.serialize(ref calldata);
 
     let contract_address = dao_factory_contract.precalculate_address(@calldata);
 
@@ -126,26 +151,26 @@ fn fund(
     treasury_dispatcher.add_whitelisted_contributor(caller);
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
 
-    println!(" 3.2. Approve smart contract for token transfer (1_u256)");
+    println!(" 3.2. Approve smart contract for token transfer (2000_000_000_u256)");
 
     start_prank(cheatcodes::CheatTarget::One(erc20_contract_address), caller);
 
-    erc20_dispatcher.approve(dao_address, 20_u256);
+    erc20_dispatcher.approve(dao_address, 2000_000_000_u256);
 
     stop_prank(cheatcodes::CheatTarget::One(erc20_contract_address));
 
-    println!(" 3.3. Send fund to the created DAO (1_u256)");
+    println!(" 3.3. Send fund to the created DAO (2000_000_000_u256)");
 
     start_prank(cheatcodes::CheatTarget::One(dao_address), caller);
 
-    treasury_dispatcher.fund(erc20_contract_address, 20_u256);
+    treasury_dispatcher.fund(erc20_contract_address, 2000_000_000_u256);
 
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
 
     println!(" 3.4. Check token balance");
     let token_balance: u256 = treasury_dispatcher.get_token_balance(erc20_contract_address);
 
-    assert(token_balance == 20_u256, 'Fail to fund');
+    assert(token_balance == 2000_000_000_u256, 'Fail to fund');
 }
 
 fn create_job(
@@ -167,7 +192,7 @@ fn create_job(
                 pay_by_token: erc20_contract_address,
                 job_type: ContractType::HOURY,
                 fixed_price: 0,
-                hourly_rate: 1_u256,
+                hourly_rate: 10000_u256,
                 status: true
             }
         );
@@ -296,16 +321,22 @@ fn pay_member(
     erc20_dispatcher: IERC20Dispatcher,
     dao_address: ContractAddress,
     treasury_manager: ContractAddress,
-    dev1: ContractAddress
+    dev1: ContractAddress,
+    platform_fee: ContractAddress
 ) {
     start_prank(cheatcodes::CheatTarget::One(dao_address), treasury_manager);
     dao_dispatcher.pay_member(0);
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
-
     // Check treasury balance
     let treasury_balance: u256 = erc20_dispatcher.balance_of(dao_address);
     let dev1_balance: u256 = erc20_dispatcher.balance_of(dev1);
-    assert((treasury_balance + dev1_balance) == 20_u256 && dev1_balance == 3_u256, 'Not paid success');
+    let platform_fee_balance: u256 = erc20_dispatcher.balance_of(platform_fee);
+
+    assert(
+        (treasury_balance + dev1_balance + platform_fee_balance) == 2000_000_000_u256 
+    && dev1_balance == 30_000_u256
+    && platform_fee_balance == 30000 * 50 / 10000
+    , 'Not paid success');
 }
 
 #[test]
@@ -326,11 +357,14 @@ fn test_c2p() {
 
     let caller_balance: u256 = erc20_dispatcher.balance_of(caller);
 
-    assert(caller_balance == 2000_u256, 'Not correct balance');
+    assert(caller_balance == 2000_000_000_000_000_000_000_000_000_u256, 'Not correct balance');
+    println!("1. Deploy platform fee");
 
-    println!("1. Deploy a DAO Factory");
+    let platform_fee_address = deploy_platform_fee();
 
-    let dao_factory_address = deploy_dao_factory();
+    println!("2. Deploy a DAO Factory");
+
+    let dao_factory_address = deploy_dao_factory(platform_fee_address);
 
     let dao_factory_dispatcher: IDAOFactoryDispatcher = IDAOFactoryDispatcher {
         contract_address: dao_factory_address
@@ -338,7 +372,7 @@ fn test_c2p() {
     let owner: ContractAddress = dao_factory_dispatcher.get_owner();
     assert(owner == caller, 'DAO Factory & wrong contructor');
 
-    println!("2. Create a new DAO using DAOFactory");
+    println!("3. Create a new DAO using DAOFactory");
     let dao_address = create_dao(dao_factory_address);
 
     let dao_dispatcher: IDAODispatcher = IDAODispatcher { contract_address: dao_address };
@@ -357,23 +391,23 @@ fn test_c2p() {
         contract_address: dao_address
     };
 
-    println!("3. Fund DAO treasury");
+    println!("4. Fund DAO treasury");
 
     fund(treasury_manager, dao_address, caller, erc20_dispatcher, erc20_contract_address);
 
-    println!("4. Create a new job");
+    println!("5. Create a new job");
 
     create_job(dao_job_dispatcher, dao_address, job_manager, erc20_contract_address,);
 
-    println!("5. Apply job, an user becomes a candidate");
+    println!("6. Apply job, an user becomes a candidate");
 
     apply_job(dao_job_dispatcher, dao_address, dev1, 0);
 
-    println!("6. Accept candidate, user become a DAO member with a contract");
+    println!("7. Accept candidate, user become a DAO member with a contract");
 
     accept_candidate(dao_member_dispatcher, dao_dispatcher, dao_address, 0, 0, member_manager);
 
-    println!("7. Create a project by project manager");
+    println!("8. Create a project by project manager");
     create_project(
         dao_project_dispatcher,
         dao_address,
@@ -382,19 +416,20 @@ fn test_c2p() {
         array![code_reviewer]
     );
 
-    println!("8. Create a new task and assign to dev");
+    println!("9. Create a new task and assign to dev");
     create_and_asign_task(dao_dispatcher, dao_project_dispatcher, dao_address, task_manager, dev1);
 
-    println!("9. Change task status to complete (By code reviewer)");
+    println!("10. Change task status to complete (By code reviewer)");
     change_task_status(dao_project_dispatcher, dao_address, code_reviewer);
-    println!("10. Pay dev by a treasury manager");
+    println!("11. Pay dev by a treasury manager");
     pay_member(
         dao_dispatcher,
         erc20_contract_address,
         erc20_dispatcher,
         dao_address,
         treasury_manager,
-        dev1
+        dev1,
+        platform_fee_address
     );
     println!("========================================================================");
 }

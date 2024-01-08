@@ -33,7 +33,8 @@ mod DAOFactory {
         // dao address, Creator address
         dao_creator: LegacyMap<ContractAddress, ContractAddress>,
         count_daos: u32,
-        dao_hash: ClassHash
+        dao_hash: ClassHash,
+        platform_fee: ContractAddress
     }
 
     #[event]
@@ -56,9 +57,10 @@ mod DAOFactory {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, dao_hash: ClassHash, owner: ContractAddress) {
+    fn constructor(ref self: ContractState, dao_hash: ClassHash, owner: ContractAddress, platform_fee: ContractAddress) {
         self.owner.write(owner);
         self.dao_hash.write(dao_hash);
+        self.platform_fee.write(platform_fee);
     }
 
     #[abi(embed_v0)]
@@ -74,6 +76,7 @@ mod DAOFactory {
             project_managers: Array<ContractAddress>,
             job_managers: Array<ContractAddress>
         ) -> ContractAddress {
+            
             let mut calldata = ArrayTrait::new();
             get_caller_address().serialize(ref calldata);
             dao_detail.serialize(ref calldata);
@@ -81,6 +84,8 @@ mod DAOFactory {
             member_managers.serialize(ref calldata);
             project_managers.serialize(ref calldata);
             job_managers.serialize(ref calldata);
+            self.platform_fee.read().serialize(ref calldata);
+
             let result: SyscallResult<(ContractAddress, Span<felt252>)> = deploy_syscall(
                 self.dao_hash.read(), 0, calldata.span(), false
             );

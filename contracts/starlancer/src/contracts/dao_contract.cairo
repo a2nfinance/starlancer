@@ -90,9 +90,11 @@ mod DAO {
         treasury_managers: Array<ContractAddress>,
         member_managers: Array<ContractAddress>,
         project_managers: Array<ContractAddress>,
-        job_managers: Array<ContractAddress>
+        job_managers: Array<ContractAddress>,
+        platform_fee: ContractAddress
     ) {
         DAOTreasuryInternalImpl::_add_treasury_managers(ref self.dao_treasury, treasury_managers);
+        DAOTreasuryInternalImpl::_init_platform_fee(ref self.dao_treasury, platform_fee);
         DAOProjectInternalImpl::_add_project_managers(ref self.dao_projects, project_managers);
         DAOJobsInternalImpl::_add_job_managers(ref self.dao_jobs, job_managers);
         DAOMemberInternalImpl::_add_member_managers(ref self.members, member_managers);

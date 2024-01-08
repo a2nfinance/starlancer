@@ -19,6 +19,7 @@ mod Errors {
 
     const NOT_WHITELISTED_CONTRIBUTOR: felt252 = 'Not whitelisted contributor';
     const NOT_TREASURY_MANAGER: felt252 = 'Not treasury manager';
+    const NOT_ENOUGH_BALANCE: felt252 = 'Not enough balance to pay';
 
     const NOT_DAO_OWNER: felt252 = 'Not DAO owner';
     const NOT_ACTIVE_DAO: felt252 = 'Not active DAO';
@@ -27,4 +28,8 @@ mod Errors {
     const FAIL_TO_CREATE_DAO: felt252 = 'Fail to create DAO';
     const NOT_DAO_FACTORY_ONWER: felt252 = 'Not dao factory owner';
     const HAS_NO_CONTRACT: felt252 = 'Has no contract';
+
+
+    const NOT_PLATFORM_FEE_ADMIN: felt252 = 'Not platform fee admin';
+      
 }

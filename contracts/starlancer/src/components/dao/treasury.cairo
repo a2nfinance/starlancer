@@ -17,12 +17,15 @@ mod treasury_component {
     use openzeppelin::token::erc20::interface::IERC20Dispatcher;
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use starlancer::error::Errors;
+    use starlancer::contracts::platform_fee::IPlatformFeeDispatcherTrait;
+    use starlancer::contracts::platform_fee::IPlatformFeeDispatcher;
 
     #[storage]
     struct Storage {
         token_balances: LegacyMap<ContractAddress, u256>,
         whitelisted_contributors: LegacyMap<ContractAddress, bool>,
         treasury_managers: LegacyMap<ContractAddress, bool>,
+        platform_fee: ContractAddress
     }
 
     #[event]
@@ -60,17 +63,28 @@ mod treasury_component {
             self._assert_is_treasury_manager();
             // Payhere
 
-            let mut call_data: Array<felt252> = ArrayTrait::new();
-            Serde::serialize(@to, ref call_data);
-            Serde::serialize(@amount, ref call_data);
-
             let erc20_dispatcher: IERC20Dispatcher = IERC20Dispatcher {
                 contract_address: pay_by_token
             };
+
+            let platform_fee_dispatcher: IPlatformFeeDispatcher = IPlatformFeeDispatcher {
+                contract_address: self.platform_fee.read()
+            };
+
+            let discounted_rate_fee: u16 = platform_fee_dispatcher
+                .get_discounted_rate_fee(pay_by_token, get_contract_address());
+            let fee: u256 = amount * discounted_rate_fee.into() / 10000;
+            let balance: u256 = erc20_dispatcher.balance_of(get_contract_address());
+
+            assert(balance > fee + amount, Errors::NOT_ENOUGH_BALANCE);
+
             erc20_dispatcher.transfer(to, amount);
+            
+            if (fee > 0) {
+                erc20_dispatcher.transfer(self.platform_fee.read(), fee);
+            }
 
             // emit
-
             self.emit(Pay { to: to, amount: amount });
         }
 
@@ -118,6 +132,9 @@ mod treasury_component {
     impl TreasuryInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of TreasuryInternalTrait<TContractState> {
+        fn _init_platform_fee(ref self: ComponentState<TContractState>, platform_fee: ContractAddress) {
+            self.platform_fee.write(platform_fee);
+        }
         fn _assert_is_treasury_manager(self: @ComponentState<TContractState>) {
             assert(self.treasury_managers.read(get_caller_address()), Errors::NOT_TREASURY_MANAGER);
         }
@@ -155,5 +172,6 @@ mod treasury_component {
                 }
             }
         }
+        
     }
 }

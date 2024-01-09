@@ -6,9 +6,11 @@ import { useMemo } from "react";
 
 
 function WalletConnected() {
+  const { connector } = useConnect();
   const [messageApi, contextHolder] = message.useMessage();
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
+
 
   const shortenedAddress = useMemo(() => {
     if (!address) return "";
@@ -18,7 +20,7 @@ function WalletConnected() {
   return (
     <Space>
       {contextHolder}
-      <Button type="primary" size="large" onClick={() => { window.navigator.clipboard.writeText(address || ""); messageApi.success("Copied address")}}>{shortenedAddress}</Button>
+      <Button icon={<Image src={connector?.icon.dark} preview={false} width={20} />} type="primary" size="large" onClick={() => { window.navigator.clipboard.writeText(address || ""); messageApi.success("Copied address")}}>{shortenedAddress}</Button>
       <Button size={"large"} icon={<DisconnectOutlined />} onClick={() => disconnect()}></Button>
     </Space>
   );

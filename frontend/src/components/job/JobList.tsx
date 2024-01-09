@@ -92,7 +92,11 @@ export const JobList = () => {
     ]
     return (
         <>
-            <Button onClick={() => createJob(router.query["address"]?.toString() || "", account)}>Create Job</Button>
+
+            <Space>
+                <Button type="primary" disabled={!userRoles.is_job_manager} onClick={() => createJob(router.query["address"]?.toString() || "", account)}>New job</Button><span>Only job managers can create jobs</span>
+            </Space>
+            <Divider />
             <Table
                 columns={columns}
                 dataSource={jobs}

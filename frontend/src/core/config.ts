@@ -16,4 +16,4 @@ export const DAO = {
     abi: dao_abi
 }
 
-export const TESTNET_EXPLORER="https://testnet.starkscan.co/"
+export const TESTNET_EXPLORER="https://testnet.starkscan.co"

@@ -11,6 +11,7 @@ import { Button, Descriptions, Divider, Modal, Space, Table, Tag } from "antd"
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { ApplyModalContent } from "./ApplyModalContent";
+import { CandidateList } from "./CandidateList";
 
 export const JobList = () => {
     const { account } = useAccount();
@@ -77,13 +78,13 @@ export const JobList = () => {
             )
         },
         {
-            title: "Action",
+            title: "Actions",
             dataIndex: "action",
             key: "action",
             render: (_, record, index) => (
                 <Space>
-                    <Button disabled={!account || !isAllowApply(userRoles)} onClick={() => handleOpenApplyModal(record, index)}>Apply</Button>
-                    <Button onClick={() => handleOpenCandidatesModal(record, index)}>Candidates</Button>
+                    <Button type="primary" disabled={!account || !isAllowApply(userRoles)} onClick={() => handleOpenApplyModal(record, index)}>Apply</Button>
+                    <Button onClick={() => handleOpenCandidatesModal(record, index)}>Show candidates</Button>
                 </Space>
             )
         },
@@ -103,9 +104,9 @@ export const JobList = () => {
                 <Button type="primary" size="large" style={{ width: "100%" }} onClick={() => applyJob(router.query["address"]?.toString() || "", account)}>Apply Now</Button>
             </Modal>
 
-            <Modal width={400} title={"JOB CANDIDATES"} open={openCandidatesModal} onCancel={closeCandidatesModal} footer={null} >
+            <Modal width={600} title={"JOB CANDIDATES"} open={openCandidatesModal} onCancel={closeCandidatesModal} footer={null} >
 
-                
+                <CandidateList />
             </Modal>
         </>
     )

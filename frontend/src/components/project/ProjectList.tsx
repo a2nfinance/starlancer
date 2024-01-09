@@ -2,12 +2,12 @@ import { useAppSelector } from "@/controller/hooks";
 import { createProject, getDAOProjects } from "@/core/c2p";
 import { LinkOutlined } from "@ant-design/icons";
 import { useAccount } from "@starknet-react/core"
-import { Button, Table, Tag } from "antd";
+import { Button, Divider, Space, Table, Tag } from "antd";
 import { useRouter } from "next/router";
 import { useCallback, useEffect } from "react";
 
 export const ProjectList = () => {
-    const { projects } = useAppSelector(state => state.daoDetail);
+    const { projects, userRoles } = useAppSelector(state => state.daoDetail);
     const { account } = useAccount();
     const router = useRouter();
 
@@ -72,8 +72,10 @@ export const ProjectList = () => {
     ];
     return (
         <>
-            <Button onClick={() => handleCreateProject()}>Create Project</Button>
-
+            <Space>
+                <Button type="primary" disabled={!userRoles.is_treasury_manager} onClick={() => handleCreateProject()}>Create Project</Button><span>Only project managers can create projects</span>
+            </Space>
+            <Divider />
             <Table
                 pagination={false}
                 dataSource={projects}

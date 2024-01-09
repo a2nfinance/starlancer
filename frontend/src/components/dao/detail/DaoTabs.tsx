@@ -1,3 +1,4 @@
+import { JobList } from '@/components/job/JobList';
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
 import { ProjectList } from '../../project/ProjectList';
@@ -13,7 +14,7 @@ export const DaoTabs = () => {
         {
             key: '2',
             label: `Jobs`,
-            children: <></>,
+            children: <JobList />
         },
         {
             key: '3',

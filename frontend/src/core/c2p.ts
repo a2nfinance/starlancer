@@ -14,13 +14,13 @@
 
 import { provider } from "@/utils/network";
 import { Contract, TypedContract, num, shortString, cairo, AccountInterface, CairoCustomEnum } from "starknet";
-import { DAO, DAO_FACTORY } from "./config";
+import { DAO, DAO_FACTORY, STARLANCER_TOKEN, WHITELISTED_TOKENS } from "./config";
 import { convertToString, convertToTextStruct } from "@/utils/cairotext";
 import { convertDAOData, convertJobData, convertProjectData } from "@/helpers/data_converter";
 import { store } from "@/controller/store";
 
 import { setDAOProps } from "@/controller/dao/daoSlice";
-import { setDAODetail, setDAOStatistics, setJobs, setProjects, setUserRoles } from "@/controller/dao/daoDetailSlice";
+import { setDAODetail, setDAOStatistics, setJobs, setProjects, setProps, setUserRoles } from "@/controller/dao/daoDetailSlice";
 import moment from "moment";
 let daoContract: Contract;
 let daoContractTyped: TypedContract<typeof DAO.abi>;
@@ -39,6 +39,8 @@ const singletonDAOContract = (daoAddress: string | "") => {
         }
     }
 }
+
+
 export const getDAOs = async () => {
     try {
         let allDAOs: Array<bigint> = await daoFactoryContractTyped.get_all_daos();
@@ -120,7 +122,27 @@ export const createDAO = async (account: AccountInterface | undefined) => {
     )
 }
 
-export const fundDAO = async () => {
+export const fundDAO = async (tokenAddresses: string, account: AccountInterface | undefined, amount: number, decimals: number) => {
+    try {
+        let { detail: dao } = store.getState().daoDetail;
+        if (!dao.address || !account) {
+            // notification here
+            return;
+        }
+        let contract = new Contract(STARLANCER_TOKEN.abi, tokenAddresses, provider);
+        let convertedAmount = BigInt(amount) * BigInt(10 ** decimals);
+
+        contract.connect(account);
+        let res = await contract.approve(dao.address, convertedAmount);
+        await provider.waitForTransaction(res.transaction_hash);
+        
+        singletonDAOContract(dao.address);
+
+        daoContractTyped.connect(account);
+        await daoContractTyped.fund(tokenAddresses, convertedAmount);
+    } catch (e) {
+        console.log(e);
+    }
 
 }
 
@@ -136,14 +158,14 @@ export const createJob = async (address: string, account: AccountInterface | und
         let job = {
             creator: account.address,
             start_date: moment().unix(),
-            end_date: moment().unix() + 60*60 * 24 * 30,
+            end_date: moment().unix() + 60 * 60 * 24 * 30,
             title: convertToTextStruct("Cairo Developer"),
             short_description: convertToTextStruct("Develop smart contracts using cairo 1.0"),
             job_detail: convertToTextStruct("https://starlancer.a2n.finance/jobs/cairo1"),
             // true: open, false: closed,
-            job_type: new CairoCustomEnum({HOURY: true}),
+            job_type: new CairoCustomEnum({ HOURY: true }),
             fixed_price: 0,
-            hourly_rate: 20 * 10**18,
+            hourly_rate: 20 * 10 ** 18,
             pay_by_token: process.env.NEXT_PUBLIC_STARLANCER_TOKEN,
             status: true
         };
@@ -154,7 +176,7 @@ export const createJob = async (address: string, account: AccountInterface | und
         )
 
         daoContractTyped.connect(account);
- 
+
         await daoContractTyped.add_job(myCallData.calldata);
 
 
@@ -163,7 +185,7 @@ export const createJob = async (address: string, account: AccountInterface | und
     }
 
 }
-export const getJobs = async (address:string) => {
+export const getJobs = async (address: string) => {
     try {
         if (!address) {
             return;
@@ -176,22 +198,71 @@ export const getJobs = async (address:string) => {
         console.log(e)
     }
 }
-export const applyJob = async () => {
-       
+export const applyJob = async (address: string, account: AccountInterface | undefined) => {
+    try {
+        if (!address || !account) {
+            // notification here
+            return;
+        }
+        singletonDAOContract(address);
+
+        let selectedJob = store.getState().daoDetail.selectedJob;
+
+        let myCallData = daoContractTyped.populate("apply_job",
+            [
+                selectedJob.index
+            ]
+        )
+
+        daoContractTyped.connect(account);
+
+        await daoContractTyped.apply_job(myCallData.calldata);
+
+
+    } catch (e) {
+        console.log(e);
+    }
 }
 
-export const acceptCandidate = async () => {
+export const acceptCandidate = async (account: AccountInterface | undefined, candidateIndex: number) => {
+    try {
+        let { detail: dao } = store.getState().daoDetail;
+        if (!dao.address || !account) {
+            // notification here
+            return;
+        }
 
+        singletonDAOContract(dao.address);
+
+        let selectedJob = store.getState().daoDetail.selectedJob;
+        let now = moment().unix();
+        let myCallData = daoContractTyped.populate("accept_candidate",
+            [
+                selectedJob.index,
+                candidateIndex,
+                now,
+                now + 265 * 24 * 3600
+            ]
+        )
+
+        daoContractTyped.connect(account);
+
+        await daoContractTyped.accept_candidate(myCallData.calldata);
+
+
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 
-export const getDAOProjects =async (address: string) => {
+export const getDAOProjects = async (address: string) => {
     try {
         singletonDAOContract(address);
         let projects = await daoContractTyped.get_projects();
         let converedProjects = projects.map(p => convertProjectData(p));
         store.dispatch(setProjects(converedProjects))
-    } catch(e) {
+    } catch (e) {
         console.log(e);
     }
 }
@@ -222,13 +293,39 @@ export const createProject = async (address: string, account: AccountInterface |
         )
 
         daoContractTyped.connect(account);
- 
+
         await daoContractTyped.create_project(myCallData.calldata);
 
 
     } catch (e) {
         console.log(e);
     }
+}
+
+export const addWhiteListedContributor = async (account: AccountInterface | undefined) => {
+    try {
+        if (!account) {
+            // notification here
+            return;
+        }
+        let { detail: dao } = store.getState().daoDetail;
+
+        singletonDAOContract(dao.address);
+
+        let myCallData = daoContractTyped.populate("add_whitelisted_contributor",
+            [
+                "0x21ce1d9bf39d475a4bb4b407db0f41d36188f67e152b576d67340dc181167e3",
+            ]
+        )
+
+        daoContractTyped.connect(account);
+
+        await daoContractTyped.add_whitelisted_contributor(myCallData.calldata);
+
+    } catch (e) {
+        console.log(e);
+    }
+
 }
 
 export const newTask = async () => {
@@ -244,9 +341,9 @@ export const payDev = async () => {
 }
 
 
-export const getUserRoles =async (address: string, account: AccountInterface | undefined) => {
+export const getUserRoles = async (address: string, account: AccountInterface | undefined) => {
     try {
-        if(!address || !account) {
+        if (!address || !account) {
             return;
         }
         singletonDAOContract(address);
@@ -254,8 +351,69 @@ export const getUserRoles =async (address: string, account: AccountInterface | u
         let userRoles = await daoContractTyped.get_member_roles(account?.address);
 
         store.dispatch(setUserRoles(userRoles));
-    } catch(e) {
+    } catch (e) {
         console.log(e)
     }
-    
+
+}
+
+
+export const getJobCandidates = async () => {
+    try {
+        let { detail: dao, selectedJob } = store.getState().daoDetail;
+        if (!dao.address) {
+            return;
+        }
+        singletonDAOContract(dao.address);
+
+        let jobCandidates = await daoContractTyped.get_job_candidates(selectedJob.index);
+
+        store.dispatch(setProps({ att: "jobCandidates", value: jobCandidates }));
+    } catch (e) {
+        console.log(e)
+    }
+
+}
+
+
+
+export const getDevelopers = async () => {
+    try {
+        let { detail: dao } = store.getState().daoDetail;
+        if (!dao.address) {
+            return;
+        }
+        singletonDAOContract(dao.address);
+
+        let members = await daoContractTyped.get_members(0, 100);
+
+        store.dispatch(setProps({ att: "members", value: members }));
+    } catch (e) {
+        console.log(e)
+    }
+
+}
+
+
+export const getBalances = async () => {
+    try {
+        let { detail: dao } = store.getState().daoDetail;
+        if (!dao.address) {
+            return;
+        }
+        let tokenAddresses = Object.keys(WHITELISTED_TOKENS);
+
+        let reqList: Function[] = []
+        for (let i = 0; i < tokenAddresses.length; i++) {
+            let contract = new Contract(STARLANCER_TOKEN.abi, tokenAddresses[i] || "", provider);
+            reqList.push(contract.balance_of(dao.address))
+        }
+
+        let balances = await Promise.all(reqList);
+
+        store.dispatch(setProps({ att: "balances", value: balances }));
+    } catch (e) {
+        console.log(e)
+    }
+
 }

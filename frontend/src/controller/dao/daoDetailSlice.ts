@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import moment from 'moment';
 
 export type Detail = {
     address: string,
@@ -25,6 +26,7 @@ type Project = {
 }
 
 type Job = {
+    index?: number,
     creator: string,
     start_date: number,
     end_date: number,
@@ -39,7 +41,7 @@ type Job = {
     status: boolean
 }
 
-type UserRoles = {
+export type UserRoles = {
     is_job_manager: boolean,
     is_member: boolean,
     is_member_manager: boolean,
@@ -52,7 +54,9 @@ export type DaoDetailState = {
     statistics: Statistics,
     projects: Project[],
     userRoles: UserRoles,
-    jobs: Job[]
+    jobs: Job[],
+    selectedJob: Job,
+    selectedProject: Project,
 }
 
 const initialState: DaoDetailState = {
@@ -77,7 +81,31 @@ const initialState: DaoDetailState = {
         is_project_manager: false,
         is_treasury_manager: false
     },
-    jobs: []
+    jobs: [],
+    selectedJob: {
+        creator: "",
+        start_date: moment().unix(),
+        end_date: moment().unix(),
+        title: "",
+        short_description: "",
+        job_detail: "",
+        // true: open, false: closed,
+        job_type: "",
+        fixed_price: 0,
+        hourly_rate: 0,
+        pay_by_token: "",
+        status: false
+    },
+    selectedProject: {
+        creator: "",
+        start_date: moment().unix(),
+        end_date: moment().unix(),
+        title: "",
+        short_description: "",
+        project_detail: "",
+        // true: active, false: closed
+        status: false
+    },
 }
 
 export const daoDetailSlice = createSlice({
@@ -105,7 +133,10 @@ export const daoDetailSlice = createSlice({
         setJobs: (state: DaoDetailState, action: PayloadAction<Job[]>) => {
             state.jobs = action.payload
         },
+        setProps: (state: DaoDetailState, action: PayloadAction<{att: string, value: any}>) => {
+            state[action.payload.att] = action.payload.value
+        },
     }
 })
-export const { setDAODetail, setMembers, setDAOStatistics, setProjects, setUserRoles, setJobs } = daoDetailSlice.actions;
+export const { setDAODetail, setMembers, setDAOStatistics, setProjects, setUserRoles, setJobs, setProps } = daoDetailSlice.actions;
 export default daoDetailSlice.reducer;

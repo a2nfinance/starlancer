@@ -10,6 +10,7 @@ mod Errors {
     const NOT_MEMBER: felt252 = 'Not member';
 
     const NOT_PROJECT_MANAGER: felt252 = 'Not project manager';
+    const NOT_PROJECT_CREATOR: felt252 = 'Not project creator';
     const NOT_TASK_MANAGER: felt252 = 'Not task manager';
     const NOT_CODE_REVIEWER: felt252 = 'Not code reviewer';
     const NOT_ALLOW_CHANGING_STATUS: felt252 = 'Not allow changing status';
@@ -31,5 +32,4 @@ mod Errors {
 
 
     const NOT_PLATFORM_FEE_ADMIN: felt252 = 'Not platform fee admin';
-      
 }

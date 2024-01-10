@@ -17,6 +17,19 @@ trait IDAOProject<TContractState> {
     fn change_task_status(
         ref self: TContractState, project_index: u32, task_index: u32, status: TaskStatus
     );
+
+    fn add_task_managers(
+        ref self: TContractState, project_index: u32, task_managers: Array<ContractAddress>
+    );
+    fn remove_task_managers(
+        ref self: TContractState, project_index: u32, task_managers: Array<ContractAddress>
+    );
+    fn add_code_reviewers(
+        ref self: TContractState, project_index: u32, code_reviewers: Array<ContractAddress>
+    );
+    fn remove_code_reviewers(
+        ref self: TContractState, project_index: u32, code_reviewers: Array<ContractAddress>
+    );
 }
 
 #[starknet::component]
@@ -271,6 +284,7 @@ mod project_component {
                     ReopenProject { creator: get_caller_address(), project_index: project_index }
                 );
         }
+
         fn change_task_status(
             ref self: ComponentState<TContractState>,
             project_index: u32,
@@ -308,6 +322,84 @@ mod project_component {
                     }
                 )
         }
+
+        fn add_task_managers(
+            ref self: ComponentState<TContractState>,
+            project_index: u32,
+            task_managers: Array<ContractAddress>
+        ) {
+            self._assert_is_project_creator(project_index);
+            let len: u32 = task_managers.len().into();
+
+            if (len > 0) {
+                let mut i: u32 = 0;
+                loop {
+                    if (i >= len) {
+                        break;
+                    }
+                    self.task_managers.write((project_index, *task_managers.at(i)), true);
+                    i += 1;
+                }
+            }
+        }
+
+        fn remove_task_managers(
+            ref self: ComponentState<TContractState>,
+            project_index: u32,
+            task_managers: Array<ContractAddress>
+        ) {
+            self._assert_is_project_creator(project_index);
+            let len: u32 = task_managers.len().into();
+
+            if (len > 0) {
+                let mut i: u32 = 0;
+                loop {
+                    if (i >= len) {
+                        break;
+                    }
+                    self.task_managers.write((project_index, *task_managers.at(i)), false);
+                    i += 1;
+                }
+            }
+        }
+        fn add_code_reviewers(
+            ref self: ComponentState<TContractState>,
+            project_index: u32,
+            code_reviewers: Array<ContractAddress>
+        ) {
+            self._assert_is_project_creator(project_index);
+            let len: u32 = code_reviewers.len().into();
+
+            if (len > 0) {
+                let mut i: u32 = 0;
+                loop {
+                    if (i >= len) {
+                        break;
+                    }
+                    self.code_reviewers.write((project_index, *code_reviewers.at(i)), true);
+                    i += 1;
+                }
+            }
+        }
+        fn remove_code_reviewers(
+            ref self: ComponentState<TContractState>,
+            project_index: u32,
+            code_reviewers: Array<ContractAddress>
+        ) {
+            self._assert_is_project_creator(project_index);
+            let len: u32 = code_reviewers.len().into();
+
+            if (len > 0) {
+                let mut i: u32 = 0;
+                loop {
+                    if (i >= len) {
+                        break;
+                    }
+                    self.code_reviewers.write((project_index, *code_reviewers.at(i)), false);
+                    i += 1;
+                }
+            }
+        }
     }
 
     #[generate_trait]
@@ -316,6 +408,11 @@ mod project_component {
     > of DAOProjectInternalImplTrait<TContractState> {
         fn _assert_is_project_manager(self: @ComponentState<TContractState>) {
             assert(self.project_managers.read(get_caller_address()), Errors::NOT_PROJECT_MANAGER);
+        }
+
+        fn _assert_is_project_creator(self: @ComponentState<TContractState>, project_index: u32) {
+            let project: Project = self.projects.read(project_index);
+            assert(project.creator == get_caller_address(), Errors::NOT_PROJECT_CREATOR);
         }
 
         fn _assert_is_task_manager(self: @ComponentState<TContractState>, project_index: u32) {

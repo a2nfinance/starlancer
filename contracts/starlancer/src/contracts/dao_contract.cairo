@@ -24,6 +24,16 @@ trait IDAO<TContractState> {
     ) -> ProjectRoles;
     fn get_statistic(self: @TContractState) -> DAOStatistics;
     fn get_dao_detail(self: @TContractState) -> DAODetail;
+    fn add_project_managers(ref self: TContractState, project_managers: Array<ContractAddress>);
+    fn remove_project_managers(ref self: TContractState, project_managers: Array<ContractAddress>);
+    fn add_treasury_managers(ref self: TContractState, treasury_managers: Array<ContractAddress>);
+    fn remove_treasury_managers(
+        ref self: TContractState, treasury_managers: Array<ContractAddress>
+    );
+    fn add_member_managers(ref self: TContractState, member_managers: Array<ContractAddress>);
+    fn remove_member_managers(ref self: TContractState, member_managers: Array<ContractAddress>);
+    fn add_job_managers(ref self: TContractState, job_managers: Array<ContractAddress>);
+    fn remove_job_managers(ref self: TContractState, job_managers: Array<ContractAddress>);
 }
 
 #[starknet::contract]
@@ -137,9 +147,7 @@ mod DAO {
                         ref self, member_address, contract.pay_by_token, billing_amount
                     );
                 },
-                Option::None => {
-                    assert(false, Errors::HAS_NO_CONTRACT);
-                }
+                Option::None => { assert(false, Errors::HAS_NO_CONTRACT); }
             }
         }
 
@@ -211,6 +219,55 @@ mod DAO {
 
         fn get_dao_detail(self: @ContractState) -> DAODetail {
             self.dao_detail.read()
+        }
+
+
+        // Manager DAO Roles
+
+        fn add_project_managers(ref self: ContractState, project_managers: Array<ContractAddress>) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+
+            DAOProjectInternalImpl::_add_project_managers(ref self.dao_projects, project_managers);
+        }
+        fn remove_project_managers(
+            ref self: ContractState, project_managers: Array<ContractAddress>
+        ) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+
+            DAOProjectInternalImpl::_remove_project_managers(ref self.dao_projects, project_managers);
+        }
+        fn add_treasury_managers(
+            ref self: ContractState, treasury_managers: Array<ContractAddress>
+        ) {
+
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+
+            DAOTreasuryInternalImpl::_add_treasury_managers(ref self.dao_treasury, treasury_managers);
+        }
+        fn remove_treasury_managers(
+            ref self: ContractState, treasury_managers: Array<ContractAddress>
+        ) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+
+            DAOTreasuryInternalImpl::_remove_treasury_managers(ref self.dao_treasury, treasury_managers);
+        }
+        fn add_member_managers(ref self: ContractState, member_managers: Array<ContractAddress>) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+            DAOMemberInternalImpl::_add_member_managers(ref self.members, member_managers);
+        }
+        fn remove_member_managers(
+            ref self: ContractState, member_managers: Array<ContractAddress>
+        ) {
+             assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+            DAOMemberInternalImpl::_remove_member_managers(ref self.members, member_managers)
+        }
+        fn add_job_managers(ref self: ContractState, job_managers: Array<ContractAddress>) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+            DAOJobsInternalImpl::_add_job_managers(ref self.dao_jobs, job_managers)
+        }
+        fn remove_job_managers(ref self: ContractState, job_managers: Array<ContractAddress>) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+            DAOJobsInternalImpl::_remove_job_managers(ref self.dao_jobs, job_managers)
         }
     }
 }

@@ -11,12 +11,17 @@ snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v
 starknet = "2.4.1"
 
 [[target.starknet-contract]]
+sierra = true
 casm = true
-allowed-libfuncs-list.name = "experimental"
 
 [[tool.snforge.fork]]
 name = "GoerliFork"
-url = "https://starknet-goerli.infura.io/v3/571aaed99608415397cb4eb46ca740c4"
+url = "https://free-rpc.nethermind.io/goerli-juno/"
 block_id.tag = "Latest"
 
 RUST_BACKTRACE=1
+
+[tool.sncast.account1]
+account = "account1"
+accounts-file = "/home/nghiata/.starknet_accounts/starknet_open_zeppelin_accounts.json"
+url = "https://free-rpc.nethermind.io/goerli-juno/"

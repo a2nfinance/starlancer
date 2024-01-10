@@ -7,6 +7,7 @@ trait ITreasury<TContractState> {
     fn fund(ref self: TContractState, token_address: ContractAddress, amount: u256);
     fn add_whitelisted_contributor(ref self: TContractState, contributor: ContractAddress);
     fn remove_whitelisted_contributor(ref self: TContractState, contributor: ContractAddress);
+    fn is_whitedlisted_contributor(self: @TContractState, user: ContractAddress) -> bool;
     fn get_token_balance(self: @TContractState, token_address: ContractAddress) -> u256;
 }
 
@@ -125,6 +126,10 @@ mod treasury_component {
         ) {
             self._assert_is_treasury_manager();
             self.whitelisted_contributors.write(contributor, false);
+        }
+
+        fn is_whitedlisted_contributor(self: @ComponentState<TContractState>, user: ContractAddress) -> bool {
+            self.whitelisted_contributors.read(user)
         }
     }
 

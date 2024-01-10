@@ -1,4 +1,5 @@
 import { convertToString } from "@/utils/cairotext"
+import moment from "moment"
 import { num } from "starknet"
 
 export const convertDAOData = (daoDetail) => {
@@ -45,6 +46,39 @@ export const convertJobData = (job) => {
         pay_by_token: num.toHexString(job.pay_by_token),
         status: job.status
     }
+}
+
+
+export const convertContractData = (contractOption) => {
+    console.log(contractOption);
+    if (contractOption.Some) {
+        let contract = contractOption.Some;
+        let contractVariant = contract.contract_type.variant;
+        let contractType = "hourly";
+        if (contractVariant['FIXED_PRICE']) {
+            contractType = 'fixed price'
+        }
+        return {
+            start_date: contract.start_date,
+            end_date: contract.end_date,
+            contract_type: contractType,
+            fixed_price: contract.fixed_price,
+            hourly_rate: contract.hourly_rate,
+            pay_by_token: num.toHexString(contract.pay_by_token),
+            status: contract.status
+        }
+    } else {
+        return {
+            start_date: moment().unix(),
+            end_date: moment().unix(),
+            contract_type: "",
+            fixed_price: 0,
+            hourly_rate: 0,
+            pay_by_token: "",
+            status: false,
+        }
+    }
+
 }
 // OPEN,
 // ASSIGNED,

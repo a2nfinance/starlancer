@@ -32,7 +32,7 @@ export const DetailItem = () => {
       <Descriptions layout={"vertical"} column={1}>
         <Descriptions.Item label={"Website"}>{dao.detail ? dao.detail : "N/A"}</Descriptions.Item>
         <Descriptions.Item label={"Social networks"}>{dao.social_networks ? dao.social_networks.map(sn => <a key={sn}>{sn}</a>) : "N/A"}</Descriptions.Item>
-        <Descriptions.Item label={"Address"}><a onClick={() => openLinkToExplorer(dao.address)}>{getShortAddress(dao.address)}</a></Descriptions.Item>
+        <Descriptions.Item label={"Address"}><Button onClick={() => openLinkToExplorer(dao.address)}>{getShortAddress(dao.address)}</Button></Descriptions.Item>
       </Descriptions>
       <Divider />
       <Descriptions layout={"vertical"} column={1}>

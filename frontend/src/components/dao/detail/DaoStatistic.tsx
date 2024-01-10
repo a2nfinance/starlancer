@@ -1,7 +1,7 @@
 import { Button, Col, Divider, Drawer, Input, Modal, Popover, Row, Select, Space, Statistic, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '@/controller/hooks';
-import { NewMembersForm } from './NewMembersForm';
+import { NewMembersForm } from '../../developer/DeveloperList';
 import { LoanForm } from './LoanForm';
 import { useAccount } from '@starknet-react/core';
 import { useRouter } from 'next/router';

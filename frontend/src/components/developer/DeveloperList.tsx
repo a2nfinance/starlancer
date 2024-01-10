@@ -1,14 +1,44 @@
-import { useAppSelector } from "@/controller/hooks"
-import { getDevelopers } from "@/core/c2p";
+import { useAppDispatch, useAppSelector } from "@/controller/hooks"
+import { getDevContract, getDevelopers } from "@/core/c2p";
+import { WHITELISTED_TOKENS } from "@/core/config";
 import { useAddress } from "@/hooks/useAddress";
-import { Button, Space, Table } from "antd"
-import { useEffect } from "react";
+import { Button, Descriptions, Modal, Space, Table, Tag } from "antd"
+import moment from "moment";
+import { useCallback, useEffect, useState } from "react";
 import { num } from "starknet";
+import { ViewContract } from "./actions/ViewContract";
+import { getRateFee } from "@/core/platform";
+import { Payment } from "./actions/Payment";
+import { setProps } from "@/controller/dao/daoDetailSlice";
 
 
 export const DeveloperList = () => {
-    const { members, userRoles } = useAppSelector(state => state.daoDetail);
+    const { members, userRoles, devContract } = useAppSelector(state => state.daoDetail);
     const { openLinkToExplorer, getShortAddress } = useAddress();
+    const [openViewContractModal, setOpenViewContractModal] = useState(false);
+    const [openPaymentModal, setOpenPaymentModal] = useState(false);
+    const dispatch = useAppDispatch();
+    const handleOpenViewContract = useCallback((index: number) => {
+        getDevContract(index);
+        setOpenViewContractModal(true);
+    }, [])
+
+    const handleCancelViewContract = () => {
+        setOpenViewContractModal(false);
+    }
+
+    const handleOpenPayment = useCallback((index) => {
+        console.log("INDEX:", index);
+        dispatch(setProps({att: "selectedDevIndex", value: index}));
+        setOpenPaymentModal(true);
+    }, [])
+
+    const handleClosePayment = () => {
+        setOpenPaymentModal(false);
+    }
+    useEffect(() => {
+        getRateFee();
+    }, [])
     const columns = [
         {
             title: 'Address',
@@ -25,12 +55,15 @@ export const DeveloperList = () => {
             dataIndex: "action",
             render: (_, record, index) => (
                 <Space>
-                    <Button onClick={() => {}}>Show Starknet ID</Button>
-                   
-                    <Button type="primary" disabled={!userRoles.is_treasury_manager} onClick={() => {}}>
+                    <Button onClick={() => { }}>Show Starknet ID</Button>
+
+                    <Button type="primary" disabled={!userRoles.is_treasury_manager} onClick={() => handleOpenPayment(index)}>
                         Payment
                     </Button>
-                    <Button disabled={!userRoles.is_member_manager} onClick={() => {}}>
+                    <Button disabled={!userRoles.is_member_manager} onClick={() => handleOpenViewContract(index)}>
+                        View contract
+                    </Button>
+                    <Button disabled={!userRoles.is_member_manager} onClick={() => { }}>
                         End contract
                     </Button>
                 </Space>
@@ -38,9 +71,19 @@ export const DeveloperList = () => {
         }
     ]
     return (
-        <Table
-            columns={columns}
-            dataSource={members.map(m => ({ address: num.toHexString(m) }))}
-        />
+        <>
+            <Table
+                columns={columns}
+                dataSource={members.map(m => ({ address: num.toHexString(m) }))}
+            />
+            <Modal width={400} title={"DEV CONTRACT"} open={openViewContractModal} onCancel={handleCancelViewContract} footer={false}>
+                <ViewContract />
+            </Modal>
+
+            <Modal width={300} title={"PAYMENT"} open={openPaymentModal} onCancel={handleClosePayment} footer={false}>
+                <Payment />
+            </Modal>
+        </>
+
     )
 }

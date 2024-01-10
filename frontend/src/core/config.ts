@@ -44,6 +44,11 @@ export const WHITELISTED_TOKENS = {
         decimals: 18,
         symbol: "STRK"
     },
+    "0x025731f5f9629ff74d1c5f787ad1ea0ebb9157210047f6c9e3a974f771550cf4": {
+        name: "StarkGate: LUSD",
+        decimals: 18,
+        symbol: "LUSD"
+    }
 
 
 }

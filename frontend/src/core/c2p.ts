@@ -16,7 +16,7 @@ import { provider } from "@/utils/network";
 import { Contract, TypedContract, num, shortString, cairo, AccountInterface, CairoCustomEnum } from "starknet";
 import { DAO, DAO_FACTORY, STARLANCER_TOKEN, WHITELISTED_TOKENS } from "./config";
 import { convertToString, convertToTextStruct } from "@/utils/cairotext";
-import { convertDAOData, convertJobData, convertProjectData } from "@/helpers/data_converter";
+import { convertDAOData, convertJobData, convertProjectData, convertTaskData } from "@/helpers/data_converter";
 import { store } from "@/controller/store";
 
 import { setDAOProps } from "@/controller/dao/daoSlice";
@@ -135,7 +135,7 @@ export const fundDAO = async (tokenAddresses: string, account: AccountInterface 
         contract.connect(account);
         let res = await contract.approve(dao.address, convertedAmount);
         await provider.waitForTransaction(res.transaction_hash);
-        
+
         singletonDAOContract(dao.address);
 
         daoContractTyped.connect(account);
@@ -328,17 +328,98 @@ export const addWhiteListedContributor = async (account: AccountInterface | unde
 
 }
 
-export const newTask = async () => {
+export const newTask = async (formValues: FormData, account: AccountInterface | undefined) => {
+
+    try {
+        let { detail: dao, selectedProject } = store.getState().daoDetail;
+        if (!dao.address || !account) {
+            return;
+        }
+        singletonDAOContract(dao.address);
+
+        let myCallData = daoContractTyped.populate("create_assign_task",
+            [
+                formValues["developer"],
+                selectedProject.index,
+                {
+                    creator: account?.address,
+                    title: convertToTextStruct(formValues["title"]),
+                    short_description: convertToTextStruct(formValues["short_description"]),
+                    task_detail: convertToTextStruct(formValues["task_detail"]),
+                    estimate: parseInt(formValues["estimate"]),
+                    status: new CairoCustomEnum({ ASSIGNED: true }),
+                    start_date: moment(formValues["date"][0].toString()).unix(),
+                    deadline: moment(formValues["date"][1].toString()).unix()
+                }
+            ]
+        )
+        daoContractTyped.connect(account);
+
+        await daoContractTyped.create_assign_task(myCallData.calldata);
+
+
+    } catch (e) {
+        console.log(e)
+    }
 
 }
 
-export const changeTaskStatus = async () => {
+export const getProjectTasks = async() => {
+    try {
+        let { detail: dao, selectedProject } = store.getState().daoDetail;
+        if (!dao.address && !selectedProject.title) {
+            return;
+        }
+        singletonDAOContract(dao.address);
+        let projectTasks = await daoContractTyped.get_project_tasks(selectedProject.index);
+        let convertedTasks = projectTasks.map((task, index) => convertTaskData({...task, index: index}));
+        store.dispatch(setProps({att: "projectTasks", value: convertedTasks}));
+    } catch (e) {
+        console.log(e);
+    }
+}
 
+export const changeTaskStatus = async (taskIndex: number, status: string, account: AccountInterface | undefined) => {
+    try {
+        let { detail: dao, selectedProject } = store.getState().daoDetail;
+        if (!dao.address || !selectedProject.title || !account) {
+            return;
+        }
+        singletonDAOContract(dao.address);
+        let statusEnum: any;
+        if (status === "reviewing") {
+            statusEnum = {
+                REVIEWING: true
+            };
+        }
+        if (status === "complete") {
+            statusEnum = {
+                COMPLETE: true
+            };
+        }
+
+        if (status === "cancel") {
+            statusEnum = {
+                CANCELLED: true
+            };
+        }
+        console.log(statusEnum);
+        if (!statusEnum) {
+            return;
+        }
+        daoContractTyped.connect(account);
+        let res = await daoContractTyped.change_task_status(selectedProject.index, taskIndex, new CairoCustomEnum(statusEnum));
+        await provider.waitForTransaction(res.transaction_hash);
+        getProjectTasks();
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 export const payDev = async () => {
 
 }
+
 
 
 export const getUserRoles = async (address: string, account: AccountInterface | undefined) => {
@@ -351,6 +432,24 @@ export const getUserRoles = async (address: string, account: AccountInterface | 
         let userRoles = await daoContractTyped.get_member_roles(account?.address);
 
         store.dispatch(setUserRoles(userRoles));
+    } catch (e) {
+        console.log(e)
+    }
+
+}
+
+export const getProjectRoles = async (account: AccountInterface | undefined) => {
+    try {
+
+        let { detail: dao, selectedProject } = store.getState().daoDetail;
+        if (!dao.address || !account) {
+            return;
+        }
+        singletonDAOContract(dao.address);
+
+        let projectRoles = await daoContractTyped.get_project_roles(account?.address, selectedProject.index);
+
+        store.dispatch(setProps({ att: "projectRoles", value: projectRoles }));
     } catch (e) {
         console.log(e)
     }
@@ -377,13 +476,12 @@ export const getJobCandidates = async () => {
 
 
 
-export const getDevelopers = async () => {
+export const getDevelopers = async (address: string) => {
     try {
-        let { detail: dao } = store.getState().daoDetail;
-        if (!dao.address) {
+        if (!address) {
             return;
         }
-        singletonDAOContract(dao.address);
+        singletonDAOContract(address);
 
         let members = await daoContractTyped.get_members(0, 100);
 

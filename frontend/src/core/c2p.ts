@@ -16,7 +16,7 @@ import { provider } from "@/utils/network";
 import { Contract, TypedContract, num, shortString, cairo, AccountInterface, CairoCustomEnum } from "starknet";
 import { DAO, DAO_FACTORY, STARLANCER_TOKEN, WHITELISTED_TOKENS } from "./config";
 import { convertToString, convertToTextStruct } from "@/utils/cairotext";
-import { convertDAOData, convertJobData, convertProjectData, convertTaskData } from "@/helpers/data_converter";
+import { convertContractData, convertDAOData, convertJobData, convertProjectData, convertTaskData } from "@/helpers/data_converter";
 import { store } from "@/controller/store";
 
 import { setDAOProps } from "@/controller/dao/daoSlice";
@@ -364,7 +364,7 @@ export const newTask = async (formValues: FormData, account: AccountInterface | 
 
 }
 
-export const getProjectTasks = async() => {
+export const getProjectTasks = async () => {
     try {
         let { detail: dao, selectedProject } = store.getState().daoDetail;
         if (!dao.address && !selectedProject.title) {
@@ -372,8 +372,8 @@ export const getProjectTasks = async() => {
         }
         singletonDAOContract(dao.address);
         let projectTasks = await daoContractTyped.get_project_tasks(selectedProject.index);
-        let convertedTasks = projectTasks.map((task, index) => convertTaskData({...task, index: index}));
-        store.dispatch(setProps({att: "projectTasks", value: convertedTasks}));
+        let convertedTasks = projectTasks.map((task, index) => convertTaskData({ ...task, index: index }));
+        store.dispatch(setProps({ att: "projectTasks", value: convertedTasks }));
     } catch (e) {
         console.log(e);
     }
@@ -416,7 +416,53 @@ export const changeTaskStatus = async (taskIndex: number, status: string, accoun
     }
 }
 
-export const payDev = async () => {
+export const payDev = async (account: AccountInterface | undefined) => {
+    try {
+        let { detail: dao, selectedDevIndex } = store.getState().daoDetail;
+        if (!dao.address || !account) {
+            // notification here
+            return;
+        }
+        singletonDAOContract(dao.address);
+        let devContractOption = await daoContractTyped.get_member_current_contract(selectedDevIndex);
+        if (!devContractOption.Some) {
+            return;
+        }
+
+        let devContract = devContractOption.Some;
+
+        let erc20Contract = new Contract(STARLANCER_TOKEN.abi, num.toHexString(devContract.pay_by_token), provider);
+        let convertedAmount = BigInt(200.4 * 10 ** 18);
+
+        erc20Contract.connect(account);
+        let res = await erc20Contract.approve(dao.address, convertedAmount);
+        await provider.waitForTransaction(res.transaction_hash);
+
+
+
+        daoContractTyped.connect(account);
+        let payRes = await daoContractTyped.pay_member(selectedDevIndex);
+        await provider.waitForTransaction(payRes.transaction_hash);
+
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+
+export const getDevContract = async (devIndex: number) => {
+    try {
+        let { detail: dao, } = store.getState().daoDetail;
+        if (!dao.address) {
+            return;
+        }
+
+        singletonDAOContract(dao.address);
+        let contract = await daoContractTyped.get_member_current_contract(devIndex);
+        store.dispatch(setProps({ att: "devContract", value: convertContractData(contract) }));
+    } catch (e) {
+        console.log(e);
+    }
 
 }
 

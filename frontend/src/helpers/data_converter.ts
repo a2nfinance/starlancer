@@ -26,7 +26,6 @@ export const convertProjectData = (project) => {
 
 
 export const convertJobData = (job) => {
-    console.log(job)
     let jobVariant = job.job_type.variant;
     let jobType = "hourly";
     if (jobVariant['FIXED_PRICE']) {
@@ -45,5 +44,40 @@ export const convertJobData = (job) => {
         hourly_rate: job.hourly_rate,
         pay_by_token: num.toHexString(job.pay_by_token),
         status: job.status
+    }
+}
+// OPEN,
+// ASSIGNED,
+// PENDING,
+// TESTING,
+// REVIEWING,
+// COMPLETE,
+// CANCELLED
+const convertTaskStatus = (status) => {
+    let variant = status.variant;
+    if (variant.OPEN) {
+        return "assigned";
+    } else if (variant.ASSIGNED) {
+        return "assigned";
+    } else if (variant.REVIEWING) {
+        return "reviewing";
+    } else if (variant.COMPLETE) {
+        return "completed";
+    } else if (variant.CANCELLED) {
+        return "cancelled";
+    }
+}
+export const convertTaskData = (task) => {
+    console.log(task);
+    return {
+        index: task.index,
+        creator: num.toHexString(task.creator),
+        start_date: task.start_date,
+        deadline: task.deadline,
+        title: convertToString(task.title),
+        short_description: convertToString(task.short_description),
+        task_detail: convertToString(task.task_detail),
+        estimate: task.estimate,
+        status: convertTaskStatus(task.status)
     }
 }

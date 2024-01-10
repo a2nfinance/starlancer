@@ -1,15 +1,24 @@
-import { useAppSelector } from "@/controller/hooks";
-import { createProject, getDAOProjects } from "@/core/c2p";
+import { setProps } from "@/controller/dao/daoDetailSlice";
+import { useAppDispatch, useAppSelector } from "@/controller/hooks";
+import { createProject, getDAOProjects, getDevelopers } from "@/core/c2p";
+import { useAddress } from "@/hooks/useAddress";
 import { LinkOutlined } from "@ant-design/icons";
-import { useAccount } from "@starknet-react/core"
-import { Button, Divider, Space, Table, Tag } from "antd";
+import { useAccount } from "@starknet-react/core";
+import { Button, Divider, Modal, Popover, Space, Table, Tag } from "antd";
 import { useRouter } from "next/router";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { NewTask } from "./actions/NewTask";
+import { ViewTasks } from "./actions/ViewTasks";
 
 export const ProjectList = () => {
     const { projects, userRoles } = useAppSelector(state => state.daoDetail);
+    const dispatch = useAppDispatch();
     const { account } = useAccount();
     const router = useRouter();
+    const { getShortAddress, openLinkToExplorer } = useAddress();
+
+    const [openNewTaskModal, setOpenNewTaskModal] = useState(false);
+    const [openTaskListModal, setOpenTaskListModal] = useState(false);
 
     const handleCreateProject = useCallback(() => {
         createProject(
@@ -18,9 +27,42 @@ export const ProjectList = () => {
         )
     }, [account?.address])
 
+    const handleNewTask = useCallback((record, index) => {
+        // open modal
+        // set selected project
+        dispatch(setProps({ att: "selectedProject", value: { ...record, index } }))
+        setOpenNewTaskModal(true);
+    }, [])
+
+    const handleCloseNewTaskModal = () => {
+        setOpenNewTaskModal(false);
+    }
+
+    const handleOpenTaskList = useCallback((record, index) => {
+        dispatch(setProps({ att: "selectedProject", value: { ...record, index } }))
+        setOpenTaskListModal(true);
+    }, [])
+
+    const handleCloseTaskListModal = () => {
+        setOpenTaskListModal(false);
+    }
+    const handleAddCodeReviewers = useCallback((record) => {
+        // open modal
+        // set selected project
+        dispatch(setProps({ att: "selectedProject", value: record }))
+    }, [])
+
+    const handleAddTaskManagers = useCallback((record) => {
+        // open modal
+        // set selected project
+        dispatch(setProps({ att: "selectedProject", value: record }))
+    }, [])
+
     useEffect(() => {
         if (router.query["address"]) {
             getDAOProjects(router.query["address"].toString())
+            getDevelopers(router.query["address"].toString());
+
         }
     }, [router.query["address"]])
     const columns = [
@@ -30,11 +72,14 @@ export const ProjectList = () => {
             key: 'title',
         },
         {
-            title: "Detail",
-            dataIndex: "project_detail",
-            key: "project_detail",
+            title: "PM",
+            dataIndex: "creator",
+            key: "creator",
             render: (_, record) => (
-                <Button icon={<LinkOutlined />} onClick={() => window.open(record.project_detail, "_blank")}>view</Button>
+                // <Button icon={<LinkOutlined />} onClick={() => window.open(record.project_detail, "_blank")}>view</Button>
+                <Button onClick={() => record.creator === account?.address ? {} : openLinkToExplorer(record.creator)}>
+                    {record.creator === account?.address ? "You're PM" : getShortAddress(record.creator)}
+                </Button>
             )
         },
         {
@@ -45,14 +90,14 @@ export const ProjectList = () => {
                 new Date(parseInt(record.start_date) * 1000).toLocaleString()
             )
         },
-        {
-            title: "End date",
-            dataIndex: "end_date",
-            key: "end_date",
-            render: (_, record) => (
-                new Date(parseInt(record.end_date) * 1000).toLocaleString()
-            )
-        },
+        // {
+        //     title: "End date",
+        //     dataIndex: "end_date",
+        //     key: "end_date",
+        //     render: (_, record) => (
+        //         new Date(parseInt(record.end_date) * 1000).toLocaleString()
+        //     )
+        // },
         {
             title: "Status",
             dataIndex: "status",
@@ -65,7 +110,21 @@ export const ProjectList = () => {
             title: 'Actions',
             key: 'actions',
             render: (_, record, index) => (
-                <Button type="primary" onClick={() => router.push(`/dao/detail/${router.query["address"]}/project/${index}`)}>View tasks</Button>
+                <Popover key={`popover-${index}`} content={
+                    <Space direction="vertical">
+                        <Button style={{ width: "100%" }}>View detail</Button>
+                        <Divider />
+                        <Button style={{ width: "100%" }} onClick={() => handleNewTask(record, index)}>New task</Button>
+                        <Button style={{ width: "100%" }} onClick={() => handleOpenTaskList(record, index)}>View tasks</Button>
+                        <Divider />
+                        <Button style={{ width: "100%" }}>Add task managers</Button>
+                        <Button style={{ width: "100%" }}>Add code reviewers</Button>
+                        <Button style={{ width: "100%" }}>Change status</Button>
+                        <Button style={{ width: "100%" }}>Update project</Button>
+                    </Space>
+                }>
+                    <Button type="primary">actions</Button>
+                </Popover>
             )
 
         },
@@ -73,7 +132,7 @@ export const ProjectList = () => {
     return (
         <>
             <Space>
-                <Button type="primary" disabled={!userRoles.is_treasury_manager} onClick={() => handleCreateProject()}>Create Project</Button><span>Only project managers can create projects</span>
+                <Button type="primary" disabled={!userRoles.is_project_manager} onClick={() => handleCreateProject()}>Create Project</Button><span>Only project managers can create projects</span>
             </Space>
             <Divider />
             <Table
@@ -81,6 +140,15 @@ export const ProjectList = () => {
                 dataSource={projects}
                 columns={columns}
             />
+            <Modal width={500} title={"NEW TASK"} open={openNewTaskModal} onCancel={handleCloseNewTaskModal} footer={null} >
+                <NewTask />
+
+            </Modal>
+
+            <Modal width={"100%"} title={"TASK LIST"} open={openTaskListModal} onCancel={handleCloseTaskListModal} footer={null} >
+                <ViewTasks />
+
+            </Modal>
         </>
     )
 }

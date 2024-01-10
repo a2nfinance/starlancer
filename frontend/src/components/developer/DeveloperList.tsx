@@ -9,10 +9,6 @@ import { num } from "starknet";
 export const DeveloperList = () => {
     const { members, userRoles } = useAppSelector(state => state.daoDetail);
     const { openLinkToExplorer, getShortAddress } = useAddress();
-
-    useEffect(() => {
-        getDevelopers();
-    }, [])
     const columns = [
         {
             title: 'Address',

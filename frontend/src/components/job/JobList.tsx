@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { ApplyModalContent } from "./ApplyModalContent";
 import { CandidateList } from "./CandidateList";
+import { NewJob } from "./actions/NewJob";
 
 export const JobList = () => {
     const { account } = useAccount();
@@ -93,9 +94,7 @@ export const JobList = () => {
     return (
         <>
 
-            <Space>
-                <Button type="primary" disabled={!userRoles.is_job_manager} onClick={() => createJob(router.query["address"]?.toString() || "", account)}>New job</Button><span>Only job managers can create jobs</span>
-            </Space>
+            <NewJob />
             <Divider />
             <Table
                 columns={columns}
@@ -105,7 +104,7 @@ export const JobList = () => {
             <Modal width={400} title={"JOB DETAILS"} open={openApplyModal} onCancel={closeApplyModal} footer={null} >
                 <ApplyModalContent />
                 <Divider />
-                <Button type="primary" size="large" style={{ width: "100%" }} onClick={() => applyJob(router.query["address"]?.toString() || "", account)}>Apply Now</Button>
+                <Button type="primary" size="large" style={{ width: "100%" }} onClick={() => applyJob(account)}>Apply Now</Button>
             </Modal>
 
             <Modal width={600} title={"JOB CANDIDATES"} open={openCandidatesModal} onCancel={closeCandidatesModal} footer={null} >

@@ -30,7 +30,7 @@ export const ApplyModalContent = () => {
                         {selectedJob.job_type.toUpperCase()}
                     </Descriptions.Item>
                     <Descriptions.Item label={selectedJob.job_type === 'hourly' ? "Rate" : "Amount"}>
-                        {selectedJob.job_type === 'hourly' ? convertToToken(selectedJob.hourly_rate) : convertToToken(selectedJob.fixed_price)}
+                        {selectedJob.job_type === 'hourly' ? convertToToken(selectedJob.pay_by_token, selectedJob.hourly_rate) : convertToToken(selectedJob.pay_by_token, selectedJob.fixed_price)}
                     </Descriptions.Item>
                     <Descriptions.Item label={"Token Payment"}>
                         <Button onClick={() => openLinkToExplorer(selectedJob.pay_by_token)}>

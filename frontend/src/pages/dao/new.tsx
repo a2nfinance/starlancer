@@ -1,22 +1,32 @@
 import { DAOCreationProgress } from "@/components/dao/DAOCreationProgress";
-import { General, ReviewAndApprove, TokenGovernance, VotingConfiguration } from "@/components/dao/form";
+import { General, TreasuryManagers, DeveloperManagers, ProjectManagers, JobManagers } from "@/components/dao/form";
+import { ReviewAndApprove } from "@/components/dao/form/ReviewAndApprove";
 import { useAppSelector } from "@/controller/hooks";
-import { Divider, Space } from "antd";
+import { Col, Divider, Row, Space } from "antd";
 
 export default function NewDAO() {
-    const { generalForm } = useAppSelector(state => state.daoForm);
+    const { currentStep } = useAppSelector(state => state.daoForm);
     return (
-        <div style={{ maxWidth: 768, margin: "auto" }}>
-            <DAOCreationProgress />
-            <Divider />
+        <div style={{ maxWidth: 1440, minWidth: 780, margin: "auto" }}>
+            <Row gutter={10}>
+                <Col span={14}>
+
+                    <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+                        {currentStep === 0 && <General />}
+                        {currentStep === 1 && <TreasuryManagers />}
+                        {currentStep === 2 && <DeveloperManagers />}
+                        {currentStep === 3 && <ProjectManagers />}
+                        {currentStep === 4 && <JobManagers />}
+                        {currentStep === 5 && <ReviewAndApprove />}
+                    </Space>
+                </Col>
+                <Col span={10}><DAOCreationProgress /></Col>
+            </Row>
 
 
-            <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
-                {generalForm.status === 0 && <General isNewForm={true} />}
-                {generalForm.status === 1 && <VotingConfiguration />}
-                {generalForm.status === 2 && <TokenGovernance />}
-                {generalForm.status === 3 && <ReviewAndApprove />}
-            </Space>
+
+
+
 
         </div>
     )

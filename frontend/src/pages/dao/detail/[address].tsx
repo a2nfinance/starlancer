@@ -6,11 +6,6 @@ import {useRouter} from "next/router";
 import { useEffect } from "react";
 export default function DAODetail() {
     const router = useRouter();
-    useEffect(() => {
-        if (router.query["address"]) {
-            
-        }
-    }, [router.query["address"]])
 
     return (
         <Row gutter={16}>

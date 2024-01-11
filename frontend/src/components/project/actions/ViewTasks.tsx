@@ -7,12 +7,13 @@ import { Alert, Button, Card, Col, Collapse, Descriptions, Divider, Popover, Row
 import { useEffect } from "react";
 
 export const ViewTasks = () => {
-    const { projectRoles, projectTasks } = useAppSelector(state => state.daoDetail);
+    const { projectRoles, projectTasks, selectedProject } = useAppSelector(state => state.daoDetail);
     const { account } = useAccount();
+    const { changeTaskStatusAction } = useAppSelector(state => state.process);
     useEffect(() => {
         getProjectRoles(account);
         getProjectTasks();
-    }, [account?.address])
+    }, [account?.address, selectedProject.index])
 
     const taskContent = (task: Task, index: number, prefix: string) => {
         return {
@@ -40,26 +41,30 @@ export const ViewTasks = () => {
                 <Divider />
                 <Popover key={`popover-task-${prefix}-${index}`} content={
                     <Space direction="vertical">
-                        {task.status === 'assigned' && <Button 
-                        style={{ width: "100%" }} 
-                        onClick={() => changeTaskStatus(task.index || 0, "reviewing", account)}
+                        {task.status === 'assigned' && <Button
+                            loading={changeTaskStatusAction}
+
+                            style={{ width: "100%" }}
+                            onClick={() => changeTaskStatus(task.index || 0, "reviewing", account)}
                         >
                             Reviewing
                         </Button>}
-                        {task.status === 'reviewing' && <Button 
-                        style={{ width: "100%" }}
-                        onClick={() => changeTaskStatus(task.index || 0, "complete", account)}
+                        {task.status === 'reviewing' && <Button
+                            loading={changeTaskStatusAction}
+                            style={{ width: "100%" }}
+                            onClick={() => changeTaskStatus(task.index || 0, "complete", account)}
                         >
                             Complete</Button>}
-                        {['assigned', 'reviewing'].indexOf(task.status) !== -1 && <Button 
-                        style={{ width: "100%" }}
-                        onClick={() => changeTaskStatus(task.index || 0, "cancel", account)}
+                        {['assigned', 'reviewing'].indexOf(task.status) !== -1 && <Button
+                            loading={changeTaskStatusAction}
+                            style={{ width: "100%" }}
+                            onClick={() => changeTaskStatus(task.index || 0, "cancel", account)}
                         >
                             Cancel
                         </Button>}
                     </Space>
                 }>
-                    <Button disabled={["assigned", "reviewing"].indexOf(task.status) === -1} style={{ width: "100%" }} type="primary">Change task status</Button>
+                    <Button loading={changeTaskStatusAction} disabled={["assigned", "reviewing"].indexOf(task.status) === -1 } style={{ width: "100%" }} type="primary">Change task status</Button>
                 </Popover>
             </>,
             style: panelStyle,

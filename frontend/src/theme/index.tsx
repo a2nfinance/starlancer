@@ -16,7 +16,7 @@ const withTheme = (node: JSX.Element) => (
                 fontSize: 16
               },
             },
-            algorithm: defaultAlgorithm
+            algorithm: darkAlgorithm
           }}
       >
         <ConfigProvider

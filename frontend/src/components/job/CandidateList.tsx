@@ -8,14 +8,14 @@ import { num } from "starknet";
 
 export const CandidateList = () => {
     const { account } = useAccount();
-    const { jobCandidates, userRoles } = useAppSelector(state => state.daoDetail);
+    const { jobCandidates, userRoles, selectedJob } = useAppSelector(state => state.daoDetail);
     const { openLinkToExplorer, getShortAddress } = useAddress();
 
     const [starknetID, setStarknetID] = useState("");
 
     useEffect(() => {
         getJobCandidates();
-    }, [])
+    }, [selectedJob.index])
     const handleShowStarknetID = useCallback(async (address) => {
         try {
             let data = await fetch(`https://api.starknet.id/addr_to_domain?addr=${address}`);

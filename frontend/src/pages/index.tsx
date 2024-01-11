@@ -15,11 +15,11 @@ export default function Index() {
     const { account } = useAccount();
 
     return (
-        <div style={{ maxWidth: 1000, margin: "auto", padding: 10 }}>
+  
             <Space>
 
                 <DAOList />
             </Space>
-        </div>
+     
     )
 }

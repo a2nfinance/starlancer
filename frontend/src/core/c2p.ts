@@ -1,26 +1,14 @@
-// This core does steps:
-// 0. Deploy a mock ERC-20 token
-// 1. Deploy platform fee
-// 2. Deploy a DAO factory
-// 3. Create a new DAO using DAOFactory
-// 4. Fund DAO treasury
-// 5. Create a new job
-// 6. Apply job, the user becomes a candidate
-// 7. Accept candidate, user become a DAO member with a contract
-// 8. Create a project by project manager
-// 9. Create a new task and assign to dev
-// 10. Change task status to completes (By code reviewer)
-// 11. Pay dev by a treasury manager
-
-import { provider } from "@/utils/network";
-import { Contract, TypedContract, num, shortString, cairo, AccountInterface, CairoCustomEnum } from "starknet";
-import { DAO, DAO_FACTORY, STARLANCER_TOKEN, WHITELISTED_TOKENS } from "./config";
-import { convertToString, convertToTextStruct } from "@/utils/cairotext";
-import { convertContractData, convertDAOData, convertJobData, convertProjectData, convertTaskData } from "@/helpers/data_converter";
 import { store } from "@/controller/store";
+import { convertContractData, convertDAOData, convertJobData, convertProjectData, convertTaskData } from "@/helpers/data_converter";
+import { convertToTextStruct } from "@/utils/cairotext";
+import { provider } from "@/utils/network";
+import { AccountInterface, CairoCustomEnum, Contract, TypedContract, num } from "starknet";
+import { DAO, DAO_FACTORY, STARLANCER_TOKEN, WHITELISTED_TOKENS } from "./config";
 
-import { setDAOProps } from "@/controller/dao/daoSlice";
 import { setDAODetail, setDAOStatistics, setJobs, setProjects, setProps, setUserRoles } from "@/controller/dao/daoDetailSlice";
+import { setDAOProps } from "@/controller/dao/daoSlice";
+import { actionNames, updateActionStatus } from "@/controller/process/processSlice";
+import { MESSAGE_TYPE, openNotification } from "@/utils/noti";
 import moment from "moment";
 let daoContract: Contract;
 let daoContractTyped: TypedContract<typeof DAO.abi>;
@@ -88,47 +76,64 @@ export const getDAOStatistics = async (address: string) => {
 
 }
 
-
-
-
 export const createDAO = async (account: AccountInterface | undefined) => {
+    try {
+        if (!account) {
+            return;
+        }
+        store.dispatch(updateActionStatus({ actionName: actionNames.createDAOAction, value: true }))
+        let { kycForm, treasuryManagersForm, memberManagersForm, projectManagersForm, jobManagersForm } = store.getState().daoForm
 
-    let daoDetail = {
-        name: convertToTextStruct("A2Z company"),
-        short_description: convertToTextStruct("We are a w3b startup seeking for talent developers"),
-        detail: convertToTextStruct("https://starlancer.a2n.finance"),
-        social_networks: convertToTextStruct("https://twitter.com/levi_a2n")
+        let socialNetworks = "";
+        socialNetworks.concat(kycForm.twitter, ",", kycForm.telegram, ",", kycForm.discord, ",", kycForm.facebook);
+        let daoDetail = {
+            name: convertToTextStruct(kycForm.name),
+            short_description: convertToTextStruct(kycForm.short_description),
+            detail: convertToTextStruct(kycForm.detail),
+            social_networks: convertToTextStruct(socialNetworks)
+        }
+
+        let treasuryManagers = treasuryManagersForm.managers.map(m => m.address);
+        let memberManagers = memberManagersForm.managers.map(m => m.address);
+        let projectManagers = projectManagersForm.managers.map(m => m.address);
+        let jobManagers = jobManagersForm.managers.map(m => m.address);
+
+        let myCallData = daoFactoryContractTyped.populate("create_dao",
+            [
+                daoDetail,
+                treasuryManagers,
+                memberManagers,
+                projectManagers,
+                jobManagers
+            ]
+        )
+
+        daoFactoryContractTyped.connect(account);
+
+        let createRes = await daoFactoryContractTyped.create_dao(
+            myCallData.calldata
+        )
+        await provider.waitForTransaction(createRes.transaction_hash);
+        openNotification("Create company DAO", `Company DAO was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
+    } catch (e) {
+        console.log(e);
+        openNotification("Create company DAO", `Fail to create DAO`, MESSAGE_TYPE.ERROR, () => { })
     }
 
-    let treasuryManagers = ["0x021CE1d9bf39d475a4Bb4b407Db0f41D36188f67E152B576D67340DC181167E3"];
-    let memberManagers = ["0x021CE1d9bf39d475a4Bb4b407Db0f41D36188f67E152B576D67340DC181167E3"];
-    let projectManagers = ["0x02b3614ae7F63AAdedA321a95da44C6E8bD3D81ddA535a7C29E535A8A9e17Ab3"];
-    let jobManagers = ["0x02b3614ae7F63AAdedA321a95da44C6E8bD3D81ddA535a7C29E535A8A9e17Ab3"];
+    store.dispatch(updateActionStatus({ actionName: actionNames.createDAOAction, value: false }))
 
-    let myCallData = daoFactoryContractTyped.populate("create_dao",
-        [
-            daoDetail,
-            treasuryManagers,
-            memberManagers,
-            projectManagers,
-            jobManagers
-        ]
-    )
-
-    daoFactoryContractTyped.connect(account);
-
-    await daoFactoryContractTyped.create_dao(
-        myCallData.calldata
-    )
 }
 
 export const fundDAO = async (tokenAddresses: string, account: AccountInterface | undefined, amount: number, decimals: number) => {
+    let { detail: dao } = store.getState().daoDetail;
     try {
-        let { detail: dao } = store.getState().daoDetail;
+
         if (!dao.address || !account) {
             // notification here
             return;
         }
+
+        store.dispatch(updateActionStatus({ actionName: actionNames.fundDAOAction, value: true }));
         let contract = new Contract(STARLANCER_TOKEN.abi, tokenAddresses, provider);
         let convertedAmount = BigInt(amount) * BigInt(10 ** decimals);
 
@@ -139,34 +144,41 @@ export const fundDAO = async (tokenAddresses: string, account: AccountInterface 
         singletonDAOContract(dao.address);
 
         daoContractTyped.connect(account);
-        await daoContractTyped.fund(tokenAddresses, convertedAmount);
+        let fundRes = await daoContractTyped.fund(tokenAddresses, convertedAmount);
+        await provider.waitForTransaction(fundRes.transaction_hash);
+        openNotification("Fund DAO", `Funding ${dao.name} is successful`, MESSAGE_TYPE.SUCCESS, () => { })
     } catch (e) {
         console.log(e);
+        openNotification("Fund DAO", `Fail to fund ${dao.name}`, MESSAGE_TYPE.ERROR, () => { })
     }
-
+    store.dispatch(updateActionStatus({ actionName: actionNames.fundDAOAction, value: false }));
 }
 
-export const createJob = async (address: string, account: AccountInterface | undefined) => {
-
+export const createJob = async (formValues: FormData, account: AccountInterface | undefined) => {
+    let { detail: dao } = store.getState().daoDetail;
     try {
-        if (!address || !account) {
+        if (!dao.address || !account) {
             // notification here
             return;
         }
-        singletonDAOContract(address);
+        store.dispatch(updateActionStatus({ actionName: actionNames.newJobAction, value: true }));
+        singletonDAOContract(dao.address);
+
+        let decimals = WHITELISTED_TOKENS[formValues["pay_by_token"]].decimals;
+
+        let payAmount = BigInt(formValues["amount"] * 10 ** decimals);
 
         let job = {
             creator: account.address,
-            start_date: moment().unix(),
-            end_date: moment().unix() + 60 * 60 * 24 * 30,
-            title: convertToTextStruct("Cairo Developer"),
-            short_description: convertToTextStruct("Develop smart contracts using cairo 1.0"),
-            job_detail: convertToTextStruct("https://starlancer.a2n.finance/jobs/cairo1"),
-            // true: open, false: closed,
-            job_type: new CairoCustomEnum({ HOURY: true }),
-            fixed_price: 0,
-            hourly_rate: 20 * 10 ** 18,
-            pay_by_token: process.env.NEXT_PUBLIC_STARLANCER_TOKEN,
+            start_date: moment(formValues["date"][0].toString()).unix(),
+            end_date: moment(formValues["date"][1].toString()).unix(),
+            title: convertToTextStruct(formValues["title"]),
+            short_description: convertToTextStruct(formValues["short_description"]),
+            job_detail: convertToTextStruct(formValues["job_detail"]),
+            job_type: formValues["job_type"] === 'hourly' ? new CairoCustomEnum({ HOURY: true }) : new CairoCustomEnum({ FIXED_PRICE: true }),
+            fixed_price: formValues["job_type"] === 'hourly' ? 0 : payAmount,
+            hourly_rate: formValues["job_type"] === 'hourly' ? payAmount : 0,
+            pay_by_token: formValues["pay_by_token"],
             status: true
         };
         let myCallData = daoContractTyped.populate("add_job",
@@ -177,15 +189,19 @@ export const createJob = async (address: string, account: AccountInterface | und
 
         daoContractTyped.connect(account);
 
-        await daoContractTyped.add_job(myCallData.calldata);
+        let jobRes = await daoContractTyped.add_job(myCallData.calldata);
+        await provider.waitForTransaction(jobRes.transaction_hash);
 
-
+        openNotification("New job", `Job "${formValues["title"]}" was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        getJobs(dao.address);
     } catch (e) {
         console.log(e);
+        openNotification("New job", `Fail to create new job `, MESSAGE_TYPE.ERROR, () => { })
     }
-
+    store.dispatch(updateActionStatus({ actionName: actionNames.newJobAction, value: false }));
 }
 export const getJobs = async (address: string) => {
+
     try {
         if (!address) {
             return;
@@ -198,13 +214,15 @@ export const getJobs = async (address: string) => {
         console.log(e)
     }
 }
-export const applyJob = async (address: string, account: AccountInterface | undefined) => {
+export const applyJob = async (account: AccountInterface | undefined) => {
+    let { detail: dao } = store.getState().daoDetail;
     try {
-        if (!address || !account) {
+        if (!dao.address || !account) {
             // notification here
             return;
         }
-        singletonDAOContract(address);
+        store.dispatch(updateActionStatus({ actionName: actionNames.applyJobAction, value: true }));
+        singletonDAOContract(dao.address);
 
         let selectedJob = store.getState().daoDetail.selectedJob;
 
@@ -216,21 +234,28 @@ export const applyJob = async (address: string, account: AccountInterface | unde
 
         daoContractTyped.connect(account);
 
-        await daoContractTyped.apply_job(myCallData.calldata);
+        let applyRes = await daoContractTyped.apply_job(myCallData.calldata);
 
+        await provider.waitForTransaction(applyRes.transaction_hash);
 
+        openNotification("Apply job", `Apply job "${selectedJob.title}" successful`, MESSAGE_TYPE.SUCCESS, () => { })
     } catch (e) {
         console.log(e);
+        openNotification("Apply job", `Fail to appply job`, MESSAGE_TYPE.ERROR, () => { })
     }
+
+    store.dispatch(updateActionStatus({ actionName: actionNames.applyJobAction, value: false }));
 }
 
 export const acceptCandidate = async (account: AccountInterface | undefined, candidateIndex: number) => {
+    let { detail: dao } = store.getState().daoDetail;
     try {
-        let { detail: dao } = store.getState().daoDetail;
+
         if (!dao.address || !account) {
             // notification here
             return;
         }
+        store.dispatch(updateActionStatus({ actionName: actionNames.acceptCandidateAction, value: true }));
 
         singletonDAOContract(dao.address);
 
@@ -247,12 +272,18 @@ export const acceptCandidate = async (account: AccountInterface | undefined, can
 
         daoContractTyped.connect(account);
 
-        await daoContractTyped.accept_candidate(myCallData.calldata);
+        let acceptRes = await daoContractTyped.accept_candidate(myCallData.calldata);
 
+        await provider.waitForTransaction(acceptRes.transaction_hash);
 
+        openNotification("Accept candidate", `The candidate was accepted`, MESSAGE_TYPE.SUCCESS, () => { })
     } catch (e) {
         console.log(e);
+        openNotification("Accept candidate", `Fail to accept the candidate`, MESSAGE_TYPE.ERROR, () => { })
     }
+
+    store.dispatch(updateActionStatus({ actionName: actionNames.acceptCandidateAction, value: true }));
+
 }
 
 
@@ -266,67 +297,111 @@ export const getDAOProjects = async (address: string) => {
         console.log(e);
     }
 }
-export const createProject = async (address: string, account: AccountInterface | undefined) => {
+export const createProject = async (formValues: FormData, account: AccountInterface | undefined) => {
+    let { detail: dao } = store.getState().daoDetail;
     try {
-        if (!account) {
+        if (!dao.address || !account) {
             // notification here
             return;
         }
-        singletonDAOContract(address);
+
+        store.dispatch(updateActionStatus({ actionName: actionNames.createProjectAction, value: true }));
+        singletonDAOContract(dao.address);
 
         let project = {
             creator: account?.address,
-            start_date: moment().unix(),
-            end_date: moment().unix() + 30 * 24 * 60 * 60,
-            title: convertToTextStruct("Starlancer"),
-            short_description: convertToTextStruct("Initial starlancer project"),
-            project_detail: convertToTextStruct("https://starlancer.a2n.finance"),
-            // true: active, false: closed
+            start_date: moment(formValues["date"][0].toString()).unix(),
+            end_date: moment(formValues["date"][1].toString()).unix(),
+            title: convertToTextStruct(formValues["title"]),
+            short_description: convertToTextStruct(formValues["short_description"]),
+            project_detail: convertToTextStruct(formValues["project_detail"]),
             status: true
         };
         let myCallData = daoContractTyped.populate("create_project",
             [
-                ["0x02b3614ae7F63AAdedA321a95da44C6E8bD3D81ddA535a7C29E535A8A9e17Ab3"],
-                ["0x02b3614ae7F63AAdedA321a95da44C6E8bD3D81ddA535a7C29E535A8A9e17Ab3"],
+                formValues["task_managers"].map(m => m.address),
+                formValues["code_reviewers"].map(m => m.address),
                 project
             ]
         )
 
         daoContractTyped.connect(account);
 
-        await daoContractTyped.create_project(myCallData.calldata);
-
-
+        let projectRes = await daoContractTyped.create_project(myCallData.calldata);
+        await provider.waitForTransaction(projectRes.transaction_hash);
+        openNotification("Create project", `Project "${formValues["title"]}" was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        getDAOProjects(dao.address);
     } catch (e) {
         console.log(e);
+        openNotification("Create project", `Fail to create project "${formValues["title"]}"`, MESSAGE_TYPE.ERROR, () => { })
     }
+
+    store.dispatch(updateActionStatus({ actionName: actionNames.createProjectAction, value: false }));
 }
 
-export const addWhiteListedContributor = async (account: AccountInterface | undefined) => {
+export const addWhiteListedContributor = async (formValues: FormData, account: AccountInterface | undefined) => {
+    let { detail: dao } = store.getState().daoDetail;
     try {
-        if (!account) {
+        if (!dao.address || !account) {
             // notification here
             return;
         }
-        let { detail: dao } = store.getState().daoDetail;
+        store.dispatch(updateActionStatus({ actionName: actionNames.addContributorAction, value: true }));
 
         singletonDAOContract(dao.address);
 
         let myCallData = daoContractTyped.populate("add_whitelisted_contributor",
             [
-                "0x21ce1d9bf39d475a4bb4b407db0f41d36188f67e152b576d67340dc181167e3",
+                formValues["address"]
             ]
         )
 
         daoContractTyped.connect(account);
 
-        await daoContractTyped.add_whitelisted_contributor(myCallData.calldata);
+        let addRes = await daoContractTyped.add_whitelisted_contributor(myCallData.calldata);
 
+        await provider.waitForTransaction(addRes.transaction_hash);
+
+        openNotification("Add contributor", `Contributor was added successful`, MESSAGE_TYPE.SUCCESS, () => { })
     } catch (e) {
         console.log(e);
+        openNotification("Add contributor", `Fail to add the contributor`, MESSAGE_TYPE.ERROR, () => { })
     }
-
+    store.dispatch(updateActionStatus({ actionName: actionNames.addContributorAction, value: false }));
 }
+
+
+export const removeWhiteListedContributor = async (formValues: FormData, account: AccountInterface | undefined) => {
+    let { detail: dao } = store.getState().daoDetail;
+    try {
+        if (!dao.address || !account) {
+            // notification here
+            return;
+        }
+        store.dispatch(updateActionStatus({ actionName: actionNames.removeContributorAction, value: true }));
+
+        singletonDAOContract(dao.address);
+
+        let myCallData = daoContractTyped.populate("remove_whitelisted_contributor",
+            [
+                formValues["address"]
+            ]
+        )
+
+        daoContractTyped.connect(account);
+
+        let removeRes = await daoContractTyped.remove_whitelisted_contributor(myCallData.calldata);
+
+        await provider.waitForTransaction(removeRes.transaction_hash);
+
+        openNotification("Remove contributor", `Contributor was removed successful`, MESSAGE_TYPE.SUCCESS, () => { })
+    } catch (e) {
+        console.log(e);
+        openNotification("Remove contributor", `Fail to remove the contributor`, MESSAGE_TYPE.ERROR, () => { })
+    }
+    store.dispatch(updateActionStatus({ actionName: actionNames.removeContributorAction, value: false }));
+}
+
 
 export const newTask = async (formValues: FormData, account: AccountInterface | undefined) => {
 
@@ -335,6 +410,8 @@ export const newTask = async (formValues: FormData, account: AccountInterface | 
         if (!dao.address || !account) {
             return;
         }
+
+        store.dispatch(updateActionStatus({ actionName: actionNames.newTaskAction, value: true }));
         singletonDAOContract(dao.address);
 
         let myCallData = daoContractTyped.populate("create_assign_task",
@@ -355,13 +432,17 @@ export const newTask = async (formValues: FormData, account: AccountInterface | 
         )
         daoContractTyped.connect(account);
 
-        await daoContractTyped.create_assign_task(myCallData.calldata);
+        let newTaskRes = await daoContractTyped.create_assign_task(myCallData.calldata);
 
+        await provider.waitForTransaction(newTaskRes.transaction_hash);
 
+        openNotification("New task", `New task was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        getProjectTasks();
     } catch (e) {
-        console.log(e)
+        console.log(e);
+        openNotification("New task", `Fail to create new task`, MESSAGE_TYPE.ERROR, () => { })
     }
-
+    store.dispatch(updateActionStatus({ actionName: actionNames.newTaskAction, value: false }));
 }
 
 export const getProjectTasks = async () => {
@@ -385,6 +466,7 @@ export const changeTaskStatus = async (taskIndex: number, status: string, accoun
         if (!dao.address || !selectedProject.title || !account) {
             return;
         }
+        store.dispatch(updateActionStatus({ actionName: actionNames.changeTaskStatusAction, value: true }));
         singletonDAOContract(dao.address);
         let statusEnum: any;
         if (status === "reviewing") {
@@ -410,10 +492,14 @@ export const changeTaskStatus = async (taskIndex: number, status: string, accoun
         daoContractTyped.connect(account);
         let res = await daoContractTyped.change_task_status(selectedProject.index, taskIndex, new CairoCustomEnum(statusEnum));
         await provider.waitForTransaction(res.transaction_hash);
+        openNotification("Update task status", `Task status was updated successful`, MESSAGE_TYPE.SUCCESS, () => { })
         getProjectTasks();
     } catch (e) {
         console.log(e);
+        openNotification("Update task status", `Fail to update the task status`, MESSAGE_TYPE.ERROR, () => { })
     }
+
+    store.dispatch(updateActionStatus({ actionName: actionNames.changeTaskStatusAction, value: false }));
 }
 
 export const payDev = async (account: AccountInterface | undefined) => {
@@ -423,6 +509,7 @@ export const payDev = async (account: AccountInterface | undefined) => {
             // notification here
             return;
         }
+        store.dispatch(updateActionStatus({ actionName: actionNames.payDevAction, value: true }));
         singletonDAOContract(dao.address);
         let devContractOption = await daoContractTyped.get_member_current_contract(selectedDevIndex);
         if (!devContractOption.Some) {
@@ -443,10 +530,13 @@ export const payDev = async (account: AccountInterface | undefined) => {
         daoContractTyped.connect(account);
         let payRes = await daoContractTyped.pay_member(selectedDevIndex);
         await provider.waitForTransaction(payRes.transaction_hash);
-
+        openNotification("Dev Payout", `A payment was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
     } catch (e) {
         console.log(e);
+        openNotification("Dev Payout", `Fail to create the payment`, MESSAGE_TYPE.ERROR, () => { })
     }
+
+    store.dispatch(updateActionStatus({ actionName: actionNames.payDevAction, value: false }));
 }
 
 

@@ -1,5 +1,6 @@
 import {
     AppstoreOutlined,
+    GithubOutlined,
     HomeOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined
@@ -11,8 +12,7 @@ import { AiOutlineAppstoreAdd, AiOutlineFileAdd } from "react-icons/ai";
 import { FaSuperscript } from "react-icons/fa";
 import { GoProjectRoadmap } from "react-icons/go";
 import { GrDocumentTime } from "react-icons/gr";
-import { RiRefund2Line } from "react-icons/ri";
-import { SiCoinmarketcap } from "react-icons/si";
+import { RiRefund2Line, RiTaskLine } from "react-icons/ri";
 
 import React, { useState } from "react";
 import { WalletBar } from './common/WalletBar';
@@ -55,20 +55,14 @@ export const LayoutProvider = (props: Props) => {
                         {
                             key: '2',
                             icon: <AppstoreOutlined />,
-                            label: "DAOs",
+                            label: "Companies",
                             onClick: () => router.push("/dao/list")
                         },
                         {
-                            key: '2.5',
-                            icon: <GoProjectRoadmap />,
-                            label: "Projects",
-                            onClick: () => router.push("/project/list")
-                        },
-                        {
                             key: '3',
-                            icon: <RiRefund2Line />,
-                            label: "Loans",
-                            onClick: () => router.push("/loan/list")
+                            icon: <RiTaskLine />,
+                            label: "Conpany Register",
+                            onClick: () => router.push("/dao/new")
                         },
                         { type: 'divider' },
                         {
@@ -77,26 +71,34 @@ export const LayoutProvider = (props: Props) => {
                             label: !collapsed ? 'My Account' : '',
                             children: [
                                 {
-                                    key: '5',
-                                    icon: <AppstoreOutlined />,
-                                    label: "My DAOs",
-                                    onClick: () => router.push("/my-account/my-daos")
-                                },
-                                {
-                                    key: '5.1',
-                                    label: "My Projects",
-                                    icon: <GrDocumentTime />,
-                                    onClick: () => router.push("/my-account/my-projects")
-                                },
-                                {
-                                    key: '5.3',
-                                    label: "New DAO",
+                                    key: '4.1',
+                                    label: "Jobs",
                                     icon: <AiOutlineAppstoreAdd />,
                                     onClick: () => router.push("/dao/new")
                                 },
                                 {
-                                    key: '5.4',
-                                    label: "New Project",
+                                    key: '4.2',
+                                    label: "New job",
+                                    icon: <AiOutlineFileAdd />,
+                                    onClick: () => router.push("/project/new")
+                                },
+                            ]
+                        },
+                        { type: 'divider' },
+                        {
+                            key: '5',
+                            type: "group",
+                            label: !collapsed ? 'Payment Tools' : '',
+                            children: [
+                                {
+                                    key: '5.1',
+                                    label: "Crypto streaming",
+                                    icon: <AiOutlineAppstoreAdd />,
+                                    onClick: () => router.push("/dao/new")
+                                },
+                                {
+                                    key: '5.2',
+                                    label: "Locked time payment",
                                     icon: <AiOutlineFileAdd />,
                                     onClick: () => router.push("/project/new")
                                 },
@@ -104,24 +106,25 @@ export const LayoutProvider = (props: Props) => {
                         },
                         { type: "divider" },
                         {
-                            key: "9",
+                            key: "6",
                             type: "group",
-                            label: !collapsed ? 'Algogreen v0.0.1' : "",
+                            label: !collapsed ? 'Starlancer v0.0.1' : "",
                             children: [
                                 {
-                                    key: '12',
+                                    key: '6.1',
                                     icon: <FaSuperscript />,
                                     label: 'Twitter',
-                                    onClick: () => window.open("https://twitter.com/AlgogreenA2N", "_blank")
+                                    onClick: () => window.open("https://twitter.com/starlancer_a2n", "_blank")
                                 },
                                 {
-                                    key: '13',
-                                    icon: <SiCoinmarketcap />,
-                                    label: 'Marketplace',
-                                    onClick: () => window.open("https://marketplace-algogreen.a2n.finance", "_blank")
+                                    key: '6.2',
+                                    icon: <GithubOutlined />,
+                                    label: 'Github',
+                                    onClick: () => window.open("https://github.com/a2nfinance/starlancer", "_blank")
                                 },
                             ]
-                        }
+                        },
+                        
                     ]}
                 />
             </Sider>
@@ -157,12 +160,15 @@ export const LayoutProvider = (props: Props) => {
                         margin: '24px 16px 0 16px',
                         padding: 16,
                         boxSizing: "border-box",
-                        background: colorBgContainer
+                        background: colorBgContainer,
+                        maxWidth: 1440,
+                        marginRight: "auto",
+                        marginLeft: "auto"
                     }}
                 >
                     {props.children}
                 </Content>
-                <Footer style={{ textAlign: 'center', maxHeight: 50 }}>Algogreen - DeFi ©2023 Created by A2N Finance</Footer>
+                <Footer style={{ textAlign: 'center', maxHeight: 50 }}>Starlancer ©2024 Created by A2N Finance</Footer>
             </Layout>
 
         </Layout>

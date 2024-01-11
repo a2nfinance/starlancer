@@ -1,6 +1,7 @@
 import { useAppSelector } from "@/controller/hooks";
-import { addWhiteListedContributor, fundDAO, getBalances } from "@/core/c2p";
+import { addWhiteListedContributor, fundDAO, getBalances, removeWhiteListedContributor } from "@/core/c2p";
 import { WHITELISTED_TOKENS } from "@/core/config";
+import { accountAddressValid } from "@/helpers/data_validation";
 import { useAddress } from "@/hooks/useAddress";
 import { useAccount } from "@starknet-react/core";
 import { Button, Divider, Form, Input, Popover, Space, Table } from "antd";
@@ -10,6 +11,7 @@ export const TokenBalances = () => {
     const { balances, userRoles } = useAppSelector(state => state.daoDetail);
     const { openLinkToExplorer, getShortAddress } = useAddress();
     const { account } = useAccount();
+    const {addContributorAction, removeContributorAction} = useAppSelector(state => state.process);
     useEffect(() => {
         getBalances();
     }, [])
@@ -52,7 +54,7 @@ export const TokenBalances = () => {
                 <Space>
                     <Popover key={`popover-${index}`} content={
                         <Form name={`fund-form-${index}`} layout="vertical" onFinish={(values) => onFinish(values, record)}>
-                            <Form.Item label={"Amount"} name="amount"  rules={[{ required: true }]}>
+                            <Form.Item label={"Amount"} name="amount" rules={[{ required: true }]}>
                                 <Input size="large" type="number" />
                             </Form.Item>
                             <Button size="large" type="primary" htmlType="submit" >Send</Button>
@@ -65,10 +67,38 @@ export const TokenBalances = () => {
             )
         }
     ]
+
+    const onFinishAddContributor = (values) => {
+        addWhiteListedContributor(values, account)
+    }
+    const onFinishRemoveContributor = (values) => {
+        removeWhiteListedContributor(values, account);
+    }
     return (
         <>
             <Space>
-                <Button type="primary" disabled={!userRoles.is_treasury_manager} onClick={() => addWhiteListedContributor(account)}>Add whitelisted contributor</Button><span>Only whitelisted contributors can fund this DAO</span>
+
+                <Popover key={`add-whitelisted-contributor`} content={
+                    <Form name={`add-whitelisted-contributor`} layout="vertical" onFinish={onFinishAddContributor}>
+                        <Form.Item label={"Address"} name="address" rules={[{ required: true }, accountAddressValid]}>
+                            <Input size="large" />
+                        </Form.Item>
+                        <Button size="large" type="primary" loading={addContributorAction}  disabled={!userRoles.is_treasury_manager} htmlType="submit" >Submit</Button>
+                    </Form>} title="" trigger="hover">
+                    <Button type="primary" loading={addContributorAction} disabled={!userRoles.is_treasury_manager}>Add whitelisted contributor</Button>
+                </Popover>
+
+                <Popover key={`remove-whitelisted-contributor`} content={
+                    <Form name={`remove-whitelisted-contributor`} layout="vertical" onFinish={onFinishRemoveContributor}>
+                        <Form.Item label={"Address"} name="address" rules={[{ required: true }, accountAddressValid]}>
+                            <Input size="large" />
+                        </Form.Item>
+                        <Button size="large" type="primary" loading={removeContributorAction}  disabled={!userRoles.is_treasury_manager} htmlType="submit" >Submit</Button>
+                    </Form>} title="" trigger="hover">
+                    <Button type="primary" loading={removeContributorAction} disabled={!userRoles.is_treasury_manager}>Remove whitelisted contributor</Button>
+                </Popover>
+
+                <span>Only whitelisted contributors can fund this DAO</span>
             </Space>
             <Divider />
             <Table

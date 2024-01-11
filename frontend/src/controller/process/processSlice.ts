@@ -9,7 +9,12 @@ export const actionNames = {
     createProjectAction: "createProjectAction",
     newJobAction: "newJobAction",
     applyJobAction: "applyJobAction",
-    acceptCandidateAction: "acceptCandidateAction"
+    acceptCandidateAction: "acceptCandidateAction",
+    addContributorAction: "addContributor",
+    removeContributorAction: "removeContributor",
+    newTaskAction: "newTaskAction",
+    changeTaskStatusAction: "changeTaskStatusAction",
+    payDevAction: "payDevAction"
 }
 
 
@@ -23,7 +28,12 @@ const initialState: Processes = {
     createProjectAction: false,
     newJobAction: false,
     applyJobAction: false,
-    acceptCandidateAction: false
+    acceptCandidateAction: false,
+    addContributorAction: false,
+    removeContributorAction: false,
+    newTaskAction: false,
+    changeTaskStatusAction: false,
+    payDevAction: false
 }
 
 export const processesSlice = createSlice({

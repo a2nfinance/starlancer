@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { NewTask } from "./actions/NewTask";
 import { ViewTasks } from "./actions/ViewTasks";
+import { NewProject } from "./actions/NewProject";
 
 export const ProjectList = () => {
     const { projects, userRoles } = useAppSelector(state => state.daoDetail);
@@ -20,12 +21,7 @@ export const ProjectList = () => {
     const [openNewTaskModal, setOpenNewTaskModal] = useState(false);
     const [openTaskListModal, setOpenTaskListModal] = useState(false);
 
-    const handleCreateProject = useCallback(() => {
-        createProject(
-            router.query["address"]?.toString() || "",
-            account
-        )
-    }, [account?.address])
+
 
     const handleNewTask = useCallback((record, index) => {
         // open modal
@@ -131,9 +127,7 @@ export const ProjectList = () => {
     ];
     return (
         <>
-            <Space>
-                <Button type="primary" disabled={!userRoles.is_project_manager} onClick={() => handleCreateProject()}>Create Project</Button><span>Only project managers can create projects</span>
-            </Space>
+            <NewProject />
             <Divider />
             <Table
                 pagination={false}

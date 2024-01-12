@@ -75,7 +75,8 @@ struct MemberRoles {
     is_member_manager: bool,
     is_project_manager: bool,
     is_treasury_manager: bool,
-    is_member: bool
+    is_member: bool,
+    is_whitelisted_contributor: bool
 }
 
 #[derive(Drop, Serde)]

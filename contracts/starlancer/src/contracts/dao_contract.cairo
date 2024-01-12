@@ -25,6 +25,7 @@ trait IDAO<TContractState> {
     ) -> ProjectRoles;
     fn get_statistic(self: @TContractState) -> DAOStatistics;
     fn get_dao_detail(self: @TContractState) -> DAODetail;
+    fn update_dao_detail(ref self: TContractState, dao_detail: DAODetail);
     fn add_project_managers(ref self: TContractState, project_managers: Array<ContractAddress>);
     fn remove_project_managers(ref self: TContractState, project_managers: Array<ContractAddress>);
     fn add_treasury_managers(ref self: TContractState, treasury_managers: Array<ContractAddress>);
@@ -206,12 +207,14 @@ mod DAO {
             let is_project_manager: bool = self.dao_projects.project_managers.read(address);
             let is_treasury_manager: bool = self.dao_treasury.treasury_managers.read(address);
             let is_member: bool = self.members.member_status.read(address);
+            let is_whitelisted_contributor: bool = self.dao_treasury.whitelisted_contributors.read(address);
             MemberRoles {
                 is_job_manager: is_job_manager,
                 is_member_manager: is_member_manager,
                 is_project_manager: is_project_manager,
                 is_treasury_manager: is_treasury_manager,
-                is_member: is_member
+                is_member: is_member,
+                is_whitelisted_contributor: is_whitelisted_contributor
             }
         }
 
@@ -254,7 +257,11 @@ mod DAO {
             self.dao_detail.read()
         }
 
-
+         fn update_dao_detail(ref self: ContractState, dao_detail: DAODetail) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
+            self.dao_detail.write(dao_detail);
+         }
+         
         // Manager DAO Roles
 
         fn add_project_managers(ref self: ContractState, project_managers: Array<ContractAddress>) {

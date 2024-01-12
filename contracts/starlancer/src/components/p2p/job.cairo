@@ -23,6 +23,7 @@ trait IP2PJob<TContractState> {
     fn get_accepted_candidate_by_global_index(
         self: @TContractState, employer: ContractAddress, job_index: u32
     ) -> ContractAddress;
+
     fn apply_job(ref self: TContractState, job_index: u32);
     fn add_job(ref self: TContractState, job: Job);
     fn close_job(ref self: TContractState, local_job_index: u32);

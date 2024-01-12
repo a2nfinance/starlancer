@@ -10,7 +10,9 @@ trait IDAOProject<TContractState> {
     );
     fn get_projects(self: @TContractState) -> Array<Project>;
     fn get_project_tasks(self: @TContractState, project_index: u32) -> Array<Task>;
+    fn get_member_tasks(self: @TContractState, member: ContractAddress) -> Array<Task>;
     fn get_project(self: @TContractState, project_index: u32) -> Project;
+    fn is_paid_task(self: @TContractState, project_index: u32, task_index: u32) -> bool;
     fn close_project(ref self: TContractState, project_index: u32);
     fn reopen_project(ref self: TContractState, project_index: u32);
     fn update_project(ref self: TContractState, project_index: u32, project: Project);
@@ -216,9 +218,31 @@ mod project_component {
             tasks
         }
 
+        fn get_member_tasks(self: @ComponentState<TContractState>, member: ContractAddress) -> Array<Task> {
+            let mut tasks: Array<Task> = ArrayTrait::new();
+            let mut i: u32 = 0;
+            let count_member_tasks: u32 = self.count_member_tasks.read(member);
+            loop {
+                if (i >= count_member_tasks) {
+                    break;
+                }
+
+                let project_task: (u32, u32) = self.member_tasks.read((member, i));
+                let task: Task = self.project_tasks.read(project_task);
+                tasks.append(task);
+                i += 1;
+            };
+            tasks
+        }
+
+
         fn get_project(self: @ComponentState<TContractState>, project_index: u32) -> Project {
             self.projects.read(project_index)
         }
+
+        fn is_paid_task(self: @ComponentState<TContractState>, project_index: u32, task_index: u32) -> bool {
+            self.paid_tasks.read((project_index, task_index))
+        }   
 
         fn close_project(ref self: ComponentState<TContractState>, project_index: u32) {
             self._assert_is_project_manager();
@@ -515,6 +539,52 @@ mod project_component {
                         task_index: count_project_tasks + 1
                     }
                 )
+        }
+        fn _get_payment_amount(
+            self: @ComponentState<TContractState>, member: ContractAddress, contract: Contract
+        ) -> u256 {
+            let mut amount: u256 = 0;
+
+            let mut i: u32 = 0;
+
+            match contract.contract_type {
+                ContractType::FIXED_PRICE => { amount = contract.fixed_price },
+                ContractType::HOURY => {
+                    let count_member_tasks: u32 = self.count_member_tasks.read(member);
+                    loop {
+                        if (i >= count_member_tasks) {
+                            break;
+                        }
+                        let key: (u32, u32) = self.member_tasks.read((member, i));
+                        let task: Task = self.project_tasks.read(key);
+
+                        let is_completed_task = match task.status {
+                            TaskStatus::OPEN => false,
+                            TaskStatus::ASSIGNED => false,
+                            TaskStatus::PENDING => false,
+                            TaskStatus::TESTING => false,
+                            TaskStatus::REVIEWING => false,
+                            TaskStatus::COMPLETE => true,
+                            TaskStatus::CANCELLED => false
+                        };
+
+                        if (is_completed_task) {
+                            let is_paid: bool = self.paid_tasks.read(key);
+
+                            if (is_paid) {
+                                break;
+                            }
+
+                            let task: Task = self.project_tasks.read(key);
+
+                            amount += task.estimate.into() * contract.hourly_rate;
+                        }
+
+                        i += 1;
+                    };
+                },
+            }
+            amount
         }
 
         fn _calculate_billing(

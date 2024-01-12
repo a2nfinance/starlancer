@@ -13,6 +13,7 @@ trait IDAOFactory<TContractState> {
         job_managers: Array<ContractAddress>
     ) -> ContractAddress;
     fn update_dao_hash(ref self: TContractState, new_dao_hash: ClassHash);
+    fn update_platform_fee(ref self: TContractState, new_platfrom_fee: ContractAddress);
     fn get_all_daos(self: @TContractState) -> Array<ContractAddress>;
     fn get_dao_creator(self: @TContractState, dao_contract: ContractAddress) -> ContractAddress;
 }
@@ -111,6 +112,12 @@ mod DAOFactory {
             self.dao_hash.write(new_dao_hash);
             self.emit(UpdateDAOHash { caller: self.owner.read(), new_hash: new_dao_hash });
         }
+
+        fn update_platform_fee(ref self: ContractState, new_platfrom_fee: ContractAddress) {
+            assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_FACTORY_ONWER);
+            self.platform_fee.write(new_platfrom_fee);
+        }
+
         fn get_all_daos(self: @ContractState) -> Array<ContractAddress> {
             let mut daos: Array<ContractAddress> = ArrayTrait::new();
             let count_daos: u32 = self.count_daos.read();

@@ -6,6 +6,7 @@ trait IDAO<TContractState> {
     fn stop_dao(ref self: TContractState);
     fn active_dao(ref self: TContractState);
     fn pay_member(ref self: TContractState, member_index: u32);
+    fn get_payment_amount(self: @TContractState, member_index: u32) -> u256;
     fn create_assign_task(
         ref self: TContractState, assignee: ContractAddress, project_index: u32, task: Task
     );
@@ -126,6 +127,28 @@ mod DAO {
             self.status.write(true);
         }
 
+        fn get_payment_amount(self: @ContractState, member_index: u32) -> u256 {
+            let current_contract: Option<Contract> = DAOMemberImpl::get_member_current_contract(
+                self, member_index
+            );
+            let mut billing_amount: u256 = 0;
+            match current_contract {
+                Option::Some(contract) => {
+                    let member_address: ContractAddress = DAOMemberImpl::get_member_by_index(
+                        self, member_index
+                    );
+
+                    // Calculate billing here
+                    billing_amount = DAOProjectInternalImpl::_get_payment_amount(
+                        self.dao_projects, member_address, contract
+                    );
+                },
+                Option::None => { billing_amount = 0 }
+            }
+
+            billing_amount
+        }
+
         fn pay_member(ref self: ContractState, member_index: u32) {
             let current_contract: Option<Contract> = DAOMemberImpl::get_member_current_contract(
                 @self, member_index
@@ -211,9 +234,19 @@ mod DAO {
             let num_jobs: u32 = self.dao_jobs.count_job.read();
             let num_projects: u32 = self.dao_projects.count_project.read();
             let num_members: u32 = self.members.count_members.read();
+            let mut num_tasks: u32 = 0;
+            let mut i: u32 = 0;
+            loop {
+                if (i >= num_projects) {
+                    break;
+                }
+
+                num_tasks += self.dao_projects.count_project_tasks.read(i);
+                i += 1;
+            };
 
             DAOStatistics {
-                num_members: num_members, num_projects: num_projects, num_jobs: num_jobs
+                num_members: num_members, num_projects: num_projects, num_jobs: num_jobs, num_tasks: num_tasks
             }
         }
 

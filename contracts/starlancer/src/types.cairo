@@ -88,7 +88,8 @@ struct ProjectRoles {
 struct DAOStatistics {
     num_projects: u32,
     num_members: u32,
-    num_jobs: u32
+    num_jobs: u32,
+    num_tasks: u32
 }
 
 

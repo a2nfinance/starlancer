@@ -2,6 +2,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 trait IPlatformFee<TContractState> {
     fn get_rate_fee(self: @TContractState, rate_fee: u16) -> u16;
+    fn set_rate_fee(ref self: TContractState, rate_fee: u16);
     fn get_discounted_rate_fee(
         self: @TContractState, token_address: ContractAddress, user_address: ContractAddress
     ) -> u16;
@@ -59,6 +60,12 @@ mod PlatformFee {
         fn get_rate_fee(self: @ContractState, rate_fee: u16) -> u16 {
             self.rate_fee.read()
         }
+
+        fn set_rate_fee(ref self: ContractState, rate_fee: u16) {
+            assert(get_caller_address() == self.admin.read(), Errors::NOT_PLATFORM_FEE_ADMIN);
+            self.rate_fee.write(rate_fee);
+        }
+        
         fn get_discounted_rate_fee(
             self: @ContractState, token_address: ContractAddress, user_address: ContractAddress
         ) -> u16 {

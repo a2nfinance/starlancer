@@ -23,7 +23,7 @@ export const ViewContract = () => {
                     {devContract.contract_type}
                 </Descriptions.Item>
                 <Descriptions.Item label={devContract.contract_type === "hourly" ? "Hourly rate" : "Fixed amount"}>
-                    {(BigInt(devContract.hourly_rate) / BigInt(10 ** 18)).toString()} {WHITELISTED_TOKENS[devContract.pay_by_token]?.symbol}
+                    {(Number(BigInt(devContract.hourly_rate)) / Number(BigInt(10 ** 18))).toString()} {WHITELISTED_TOKENS[devContract.pay_by_token]?.symbol}
                 </Descriptions.Item>
             </Descriptions>
             <Descriptions column={2} layout="vertical">

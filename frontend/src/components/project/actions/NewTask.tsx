@@ -8,6 +8,7 @@ import { num } from "starknet";
 const { RangePicker } = DatePicker;
 export const NewTask = () => {
     const { members, projectRoles } = useAppSelector(state => state.daoDetail);
+    const { newTaskAction } = useAppSelector(state => state.process);
     const { account } = useAccount();
     const onFinish = useCallback((values: FormData) => {
         console.log(values);
@@ -61,7 +62,7 @@ export const NewTask = () => {
             </Form.Item>
 
             <Divider />
-            <Button htmlType="submit" disabled={!projectRoles.is_task_manager} style={{ width: "100%" }} size="large" type="primary">Submit</Button>
+            <Button htmlType="submit" loading={newTaskAction} disabled={!projectRoles.is_task_manager} style={{ width: "100%" }} size="large" type="primary">Submit</Button>
         </Form>
     )
 }

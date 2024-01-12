@@ -10,8 +10,8 @@ export const actionNames = {
     newJobAction: "newJobAction",
     applyJobAction: "applyJobAction",
     acceptCandidateAction: "acceptCandidateAction",
-    addContributorAction: "addContributor",
-    removeContributorAction: "removeContributor",
+    addContributorAction: "addContributorAction",
+    removeContributorAction: "removeContributorAction",
     newTaskAction: "newTaskAction",
     changeTaskStatusAction: "changeTaskStatusAction",
     payDevAction: "payDevAction"

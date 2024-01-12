@@ -1,30 +1,22 @@
-import { P2PApplyModalContent } from "@/components/job/p2p/P2PApplyModalContent";
-import { useAppDispatch, useAppSelector } from "@/controller/hooks"
+import { CandidatesForEmployer } from "@/components/job/p2p/CandidatesForEmployer";
+import { NewTask } from "@/components/job/p2p/NewTask";
+import { ViewTasks } from "@/components/job/p2p/ViewTasks";
+
+import { useAppDispatch, useAppSelector } from "@/controller/hooks";
 import { setProps } from "@/controller/p2p/p2pSlice";
-import { applyJob, getMyCreatedJobs } from "@/core/p2p";
+import { getMyCreatedJobs } from "@/core/p2p";
 import { headStyle } from "@/theme/layout";
 import { useAccount } from "@starknet-react/core";
-import { Button, Card, Divider, Modal, Space, Table, Tag } from "antd";
-import { useRouter } from "next/router";
+import { Button, Card, Divider, Modal, Popover, Space, Table, Tag } from "antd";
 import { useCallback, useEffect, useState } from "react";
 
 export default function CreatedJobs() {
     const { account } = useAccount();
     const { createdJobs } = useAppSelector(state => state.p2p);
     const dispatch = useAppDispatch();
-
-
-    const [openApplyModal, setOpenApplyModal] = useState(false);
     const [openCandidatesModal, setOpenCandidatesModal] = useState(false);
-
-    const handleOpenApplyModal = useCallback((record, index) => {
-        setOpenApplyModal(true);
-        dispatch(setProps({ att: "selectedJob", value: { ...record, index } }))
-    }, [])
-
-    const closeApplyModal = () => {
-        setOpenApplyModal(false)
-    }
+    const [openNewTaskModal, setOpenNewTaskModal] = useState(false);
+    const [openTaskListModal, setOpenTaskListModal] = useState(false);
 
     const handleOpenCandidatesModal = useCallback((record, index) => {
         setOpenCandidatesModal(true);
@@ -33,6 +25,26 @@ export default function CreatedJobs() {
 
     const closeCandidatesModal = () => {
         setOpenCandidatesModal(false)
+    }
+
+    const handleNewTask = useCallback((record, index) => {
+        // open modal
+        // set selected project
+        dispatch(setProps({ att: "selectedJob", value: { ...record, index } }))
+        setOpenNewTaskModal(true);
+    }, [])
+
+    const handleCloseNewTaskModal = () => {
+        setOpenNewTaskModal(false);
+    }
+
+    const handleOpenTaskList = useCallback((record, index) => {
+        dispatch(setProps({ att: "selectedJob", value: { ...record, index } }))
+        setOpenTaskListModal(true);
+    }, [])
+
+    const handleCloseTaskListModal = () => {
+        setOpenTaskListModal(false);
     }
 
     useEffect(() => {
@@ -76,34 +88,45 @@ export default function CreatedJobs() {
             dataIndex: "action",
             key: "action",
             render: (_, record, index) => (
-                <Space>
-                    {/* <Button type="primary" disabled={!account || account?.address === record.creator} onClick={() => handleOpenApplyModal(record, index)}>Apply</Button> */}
-                    <Button onClick={() => handleOpenCandidatesModal(record, index)}>Show candidates</Button>
-                </Space>
+
+                <Popover key={`popover-${index}`} content={
+                    <Space direction="vertical">
+                        <Button style={{ width: "100%" }}>View detail</Button>
+                        <Divider />
+                        <Button style={{ width: "100%" }} onClick={() => handleNewTask(record, index)}>New task</Button>
+                        <Button style={{ width: "100%" }} onClick={() => handleOpenTaskList(record, index)}>View tasks</Button>
+                        <Divider />
+                        <Button onClick={() => handleOpenCandidatesModal(record, index)}>Show candidates</Button>
+                        <Button style={{ width: "100%" }}>Change status</Button>
+                    </Space>
+                }>
+                    <Button type="primary">actions</Button>
+                </Popover>
             )
         },
 
     ]
     return (
         <Card title={"MY CREATED JOBS"} headStyle={headStyle}>
-
-            {/* <NewJob />
-            <Divider /> */}
             <Table
                 pagination={false}
                 columns={columns}
                 dataSource={createdJobs}
             />
 
-            {/* <Modal width={400} title={"JOB DETAILS"} open={openApplyModal} onCancel={closeApplyModal} footer={null} >
-                <P2PApplyModalContent />
-                <Divider />
-                <Button type="primary" size="large" style={{ width: "100%" }} onClick={() => applyJob(account)}>Apply Now</Button>
-            </Modal> */}
-
             <Modal width={600} title={"JOB CANDIDATES"} open={openCandidatesModal} onCancel={closeCandidatesModal} footer={null} >
 
-                {/* <CandidateList /> */}
+                <CandidatesForEmployer />
+            </Modal>
+
+            <Modal width={500} title={"NEW TASK"} open={openNewTaskModal} onCancel={handleCloseNewTaskModal} footer={null} >
+                <NewTask />
+
+            </Modal>
+
+            <Modal width={"100%"} title={"TASK LIST"} open={openTaskListModal} onCancel={handleCloseTaskListModal} footer={null} >
+                <ViewTasks />
+
             </Modal>
         </Card>
     )

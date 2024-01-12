@@ -5,26 +5,25 @@ import { Button, Descriptions, Divider } from "antd"
 import { useEffect } from "react";
 
 export const Payment = () => {
+    const { paymentAmount } = useAppSelector(state => state.daoDetail);
     const {rateFee} = useAppSelector(state => state.platformFee);
     const {account} = useAccount();
-    useEffect(() => {
-            // get payment need
-    }, [])
+    const {payDevAction} = useAppSelector(state => state.process);
     return (
         <>
             <Descriptions column={1}>
                 <Descriptions.Item label={"Pay dev"}>
-                    {0}
+                    {(Number(BigInt(paymentAmount)) / Number(BigInt(10**18))).toString()}
                 </Descriptions.Item>
                 <Descriptions.Item label={"Platform fee"}>
                     {rateFee / 100} %
                 </Descriptions.Item>
                 <Descriptions.Item label={"Total"}>
-                    {0}
+                    {(Number(BigInt(paymentAmount)) / Number(BigInt(10**18))) *(1 + rateFee / 10000)}
                 </Descriptions.Item>
             </Descriptions>
             <Divider />
-            <Button type="primary" size="large" style={{width: "100%"}} onClick={() => payDev(account)}>Pay now</Button>
+            <Button type="primary" loading={payDevAction} size="large" style={{width: "100%"}} onClick={() => payDev(account)}>Pay now</Button>
         </>
     )
 }

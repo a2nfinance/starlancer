@@ -56,7 +56,7 @@ export const NewJob = () => {
                     </Form.Item>
 
 
-                    <Form.Item name={"date"} label="Task start date & end date" rules={[{ required: true, message: 'Missing start date and end date' }]}>
+                    <Form.Item name={"date"} label="Open date & end date" rules={[{ required: true, message: 'Missing start date and end date' }]}>
                         <RangePicker size='large' showTime style={{ width: "100%" }} />
                     </Form.Item>
 

@@ -34,10 +34,21 @@ export const UserRoles = () => {
                 }
 
                 {
-                    userRoles.is_member_manager && <Tag color="green">Member Manager</Tag>
+                    userRoles.is_member_manager && <Tag color="green">Developer Manager</Tag>
+                }
+
+                {
+                    userRoles.is_whitelisted_contributor && <Tag color="green">Whitelisted contributor</Tag>
                 }
                 {
-                    (!userRoles.is_member && !userRoles.is_job_manager && !userRoles.is_treasury_manager && !userRoles.is_project_manager && !userRoles.is_member_manager) && <Tag color="green">N/A</Tag>
+                    (
+                        !userRoles.is_member 
+                        && !userRoles.is_job_manager 
+                        && !userRoles.is_treasury_manager 
+                        && !userRoles.is_project_manager 
+                        && !userRoles.is_member_manager
+                        && !userRoles.is_whitelisted_contributor
+                        ) && <Tag color="green">N/A</Tag>
                 }
             </Descriptions.Item>
         </Descriptions>

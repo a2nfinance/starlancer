@@ -10,6 +10,7 @@ export const CandidateList = () => {
     const { account } = useAccount();
     const { jobCandidates, userRoles, selectedJob } = useAppSelector(state => state.daoDetail);
     const { openLinkToExplorer, getShortAddress } = useAddress();
+    const { acceptCandidateAction } = useAppSelector(state => state.process);
 
     const [starknetID, setStarknetID] = useState("");
 
@@ -52,7 +53,7 @@ export const CandidateList = () => {
                         render: (_, record, index) => (
                             <Space>
                                 <Button onClick={() => handleShowStarknetID(record.address)}>Show Starknet ID</Button>
-                                <Button type="primary" disabled={!userRoles.is_member_manager} onClick={() => acceptCandidate(account, index)}>
+                                <Button type="primary" loading={acceptCandidateAction} disabled={!userRoles.is_member_manager} onClick={() => acceptCandidate(account, index)}>
                                     Accept
                                 </Button>
                             </Space>

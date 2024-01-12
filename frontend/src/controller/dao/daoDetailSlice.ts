@@ -26,7 +26,7 @@ type Project = {
     status: boolean
 }
 
-type Job = {
+export type Job = {
     index?: number,
     creator: string,
     start_date: number,
@@ -70,7 +70,8 @@ export type UserRoles = {
     is_member: boolean,
     is_member_manager: boolean,
     is_project_manager: boolean,
-    is_treasury_manager: boolean
+    is_treasury_manager: boolean,
+    is_whitelisted_contributor: boolean
 }
 
 export type ProjectRoles = {
@@ -116,7 +117,8 @@ const initialState: DaoDetailState = {
         is_member: false,
         is_member_manager: false,
         is_project_manager: false,
-        is_treasury_manager: false
+        is_treasury_manager: false,
+        is_whitelisted_contributor: false
     },
     projectRoles: {
         is_task_manager: false,

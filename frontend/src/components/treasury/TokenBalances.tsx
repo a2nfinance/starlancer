@@ -11,13 +11,12 @@ export const TokenBalances = () => {
     const { balances, userRoles } = useAppSelector(state => state.daoDetail);
     const { openLinkToExplorer, getShortAddress } = useAddress();
     const { account } = useAccount();
-    const {addContributorAction, removeContributorAction} = useAppSelector(state => state.process);
+    const {addContributorAction, removeContributorAction, fundDAOAction} = useAppSelector(state => state.process);
     useEffect(() => {
         getBalances();
     }, [])
 
     const onFinish = (values, record) => {
-        console.log(values, record);
         fundDAO(record.address, account, values.amount, record.decimals);
     }
     const columns = [
@@ -57,9 +56,9 @@ export const TokenBalances = () => {
                             <Form.Item label={"Amount"} name="amount" rules={[{ required: true }]}>
                                 <Input size="large" type="number" />
                             </Form.Item>
-                            <Button size="large" type="primary" htmlType="submit" >Send</Button>
+                            <Button size="large" type="primary" disabled={!userRoles.is_whitelisted_contributor} loading={fundDAOAction} htmlType="submit" >Send</Button>
                         </Form>} title="" trigger="hover">
-                        <Button type="primary" onClick={() => { }}>
+                        <Button disabled={!userRoles.is_whitelisted_contributor} type="primary" loading={fundDAOAction} onClick={() => { }}>
                             Fund
                         </Button>
                     </Popover>

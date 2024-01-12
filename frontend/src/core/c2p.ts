@@ -277,12 +277,13 @@ export const acceptCandidate = async (account: AccountInterface | undefined, can
         await provider.waitForTransaction(acceptRes.transaction_hash);
 
         openNotification("Accept candidate", `The candidate was accepted`, MESSAGE_TYPE.SUCCESS, () => { })
+        getDevelopers(dao.address);
     } catch (e) {
         console.log(e);
         openNotification("Accept candidate", `Fail to accept the candidate`, MESSAGE_TYPE.ERROR, () => { })
     }
 
-    store.dispatch(updateActionStatus({ actionName: actionNames.acceptCandidateAction, value: true }));
+    store.dispatch(updateActionStatus({ actionName: actionNames.acceptCandidateAction, value: false }));
 
 }
 
@@ -500,6 +501,21 @@ export const changeTaskStatus = async (taskIndex: number, status: string, accoun
     }
 
     store.dispatch(updateActionStatus({ actionName: actionNames.changeTaskStatusAction, value: false }));
+}
+
+export const getPaymentAmount = async () => {
+    try {
+        let { detail: dao, selectedDevIndex } = store.getState().daoDetail;
+        if (!dao.address) {
+            return;
+        }
+
+        singletonDAOContract(dao.address);
+        let paymentAmount = await daoContractTyped.get_payment_amount(selectedDevIndex);
+        store.dispatch(setProps({ att: "paymentAmount", value: paymentAmount }));
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 export const payDev = async (account: AccountInterface | undefined) => {

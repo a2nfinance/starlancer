@@ -10,14 +10,10 @@ import { Button, Form, Image, Layout, Menu, Space, theme } from 'antd';
 import { useRouter } from 'next/router';
 import { AiOutlineAppstoreAdd, AiOutlineFileAdd } from "react-icons/ai";
 import { FaSuperscript } from "react-icons/fa";
-import { GoProjectRoadmap } from "react-icons/go";
-import { GrDocumentTime } from "react-icons/gr";
-import { RiRefund2Line, RiTaskLine } from "react-icons/ri";
+import { RiTaskLine } from "react-icons/ri";
 
 import React, { useState } from "react";
 import { WalletBar } from './common/WalletBar';
-// import AutoSearch from './common/AutoSearch';
-// import { ConnectButton } from './common/ConnectButton';
 const { Header, Sider, Content, Footer } = Layout;
 
 interface Props {
@@ -61,8 +57,14 @@ export const LayoutProvider = (props: Props) => {
                         {
                             key: '3',
                             icon: <RiTaskLine />,
-                            label: "Conpany Register",
+                            label: "Company Register",
                             onClick: () => router.push("/dao/new")
+                        },
+                        {
+                            key: '3.1',
+                            icon: <RiTaskLine />,
+                            label: "P2P Jobs",
+                            onClick: () => router.push("/job/")
                         },
                         { type: 'divider' },
                         {
@@ -72,15 +74,21 @@ export const LayoutProvider = (props: Props) => {
                             children: [
                                 {
                                     key: '4.1',
-                                    label: "Jobs",
+                                    label: "Created Jobs",
                                     icon: <AiOutlineAppstoreAdd />,
-                                    onClick: () => router.push("/dao/new")
+                                    onClick: () => router.push("/my-account/created-jobs")
                                 },
                                 {
                                     key: '4.2',
+                                    label: "My Jobs",
+                                    icon: <AiOutlineAppstoreAdd />,
+                                    onClick: () => router.push("/my-account/my-jobs")
+                                },
+                                {
+                                    key: '4.3',
                                     label: "New job",
                                     icon: <AiOutlineFileAdd />,
-                                    onClick: () => router.push("/project/new")
+                                    onClick: () => router.push("/job/new")
                                 },
                             ]
                         },
@@ -160,7 +168,7 @@ export const LayoutProvider = (props: Props) => {
                         margin: '24px 16px 0 16px',
                         padding: 16,
                         boxSizing: "border-box",
-                        background: colorBgContainer,
+                        // background: colorBgContainer,
                         maxWidth: 1440,
                         marginRight: "auto",
                         marginLeft: "auto"

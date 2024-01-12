@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@/controller/hooks"
-import { getDevContract, getDevelopers } from "@/core/c2p";
+import { getDevContract, getDevelopers, getPaymentAmount } from "@/core/c2p";
 import { WHITELISTED_TOKENS } from "@/core/config";
 import { useAddress } from "@/hooks/useAddress";
 import { Button, Descriptions, Modal, Space, Table, Tag } from "antd"
@@ -13,7 +13,7 @@ import { setProps } from "@/controller/dao/daoDetailSlice";
 
 
 export const DeveloperList = () => {
-    const { members, userRoles, devContract } = useAppSelector(state => state.daoDetail);
+    const { members, userRoles, devContract, selectedDevIndex } = useAppSelector(state => state.daoDetail);
     const { openLinkToExplorer, getShortAddress } = useAddress();
     const [openViewContractModal, setOpenViewContractModal] = useState(false);
     const [openPaymentModal, setOpenPaymentModal] = useState(false);
@@ -28,10 +28,10 @@ export const DeveloperList = () => {
     }
 
     const handleOpenPayment = useCallback((index) => {
-        console.log("INDEX:", index);
         dispatch(setProps({att: "selectedDevIndex", value: index}));
+        getPaymentAmount();
         setOpenPaymentModal(true);
-    }, [])
+    }, [selectedDevIndex])
 
     const handleClosePayment = () => {
         setOpenPaymentModal(false);

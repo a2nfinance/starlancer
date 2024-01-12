@@ -18,6 +18,7 @@ export const JobList = () => {
     const { account } = useAccount();
     const router = useRouter();
     const { jobs, userRoles } = useAppSelector(state => state.daoDetail);
+    const { applyJobAction } = useAppSelector(state => state.process);
     const dispatch = useAppDispatch();
     const { isAllowApply } = useRoles();
 
@@ -104,7 +105,7 @@ export const JobList = () => {
             <Modal width={400} title={"JOB DETAILS"} open={openApplyModal} onCancel={closeApplyModal} footer={null} >
                 <ApplyModalContent />
                 <Divider />
-                <Button type="primary" size="large" style={{ width: "100%" }} onClick={() => applyJob(account)}>Apply Now</Button>
+                <Button type="primary" loading={applyJobAction} size="large" style={{ width: "100%" }} onClick={() => applyJob(account)}>Apply Now</Button>
             </Modal>
 
             <Modal width={600} title={"JOB CANDIDATES"} open={openCandidatesModal} onCancel={closeCandidatesModal} footer={null} >

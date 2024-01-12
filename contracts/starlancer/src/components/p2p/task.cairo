@@ -100,7 +100,8 @@ mod task_component {
                             let is_paid: bool = self.paid_tasks.read((job_index, i));
 
                             if (is_paid) {
-                                break;
+                                i += 1;
+                                continue;
                             }
 
                             total_amount += task.estimate.into() * job.hourly_rate;
@@ -140,7 +141,8 @@ mod task_component {
                             let is_paid: bool = self.paid_tasks.read((job_index, i));
 
                             if (is_paid) {
-                                break;
+                                i += 1;
+                                continue;
                             }
 
                             total_amount += task.estimate.into() * job.hourly_rate;

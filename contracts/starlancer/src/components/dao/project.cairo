@@ -569,10 +569,12 @@ mod project_component {
                         };
 
                         if (is_completed_task) {
+                            
                             let is_paid: bool = self.paid_tasks.read(key);
 
                             if (is_paid) {
-                                break;
+                                i += 1;
+                                continue;
                             }
 
                             let task: Task = self.project_tasks.read(key);
@@ -619,7 +621,8 @@ mod project_component {
                             let is_paid: bool = self.paid_tasks.read(key);
 
                             if (is_paid) {
-                                break;
+                                i += 1;
+                                continue;
                             }
 
                             let task: Task = self.project_tasks.read(key);

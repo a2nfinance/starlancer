@@ -179,7 +179,7 @@ fn create_task(
             }
         );
     stop_prank(cheatcodes::CheatTarget::One(p2p_address));
-    let tasks: Array<Task> = p2p_task_dispatcher.get_job_tasks(global_job_index);
+    let tasks: Array<Task> = p2p_dispatcher.get_employer_job_tasks(employer, local_job_index);
     let first_task: Task = *tasks.at(0);
 
     assert(first_task.estimate == 3, 'Fail to create task');
@@ -219,7 +219,7 @@ fn pay_dev(
     platform_fee: ContractAddress
 ) {
     start_prank(cheatcodes::CheatTarget::One(erc20_contract_address), employer);
-    let total_amount: u256 = p2p_dispatcher.get_job_payment_amount(0);
+    let total_amount: u256 = p2p_dispatcher.get_job_payment_amount(employer, 0);
     erc20_dispatcher.approve(p2p_address, total_amount);
     stop_prank(cheatcodes::CheatTarget::One(erc20_contract_address));
 

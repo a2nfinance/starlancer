@@ -14,8 +14,7 @@ use snforge_std::{
 use starknet::{ContractAddress, get_contract_address, ClassHash};
 use super::super::utils::mock_data::{
     get_mock_addresses, get_mock_whitelisted_contributors, get_mock_dev_accounts,
-    get_mock_project_roles,
-    get_mock_platform_fee_roles
+    get_mock_project_roles, get_mock_platform_fee_roles
 };
 use starlancer::contracts::dao_factory::IDAOFactoryDispatcher;
 use starlancer::contracts::dao_contract::IDAODispatcher;
@@ -48,7 +47,7 @@ use openzeppelin::token::erc20::interface::IERC20Dispatcher;
 // 11. Pay dev by a treasury manager
 
 fn get_textstruct_test(value: felt252) -> TextStruct {
-    TextStruct {text0: value, text1: '', text2: '', text3: '', text4: '', text5: ''}
+    TextStruct { text0: value, text1: '', text2: '', text3: '', text4: '', text5: '' }
 }
 fn deploy_mock_erc20() -> ContractAddress {
     let (caller, _, _, _, _) = get_mock_addresses();
@@ -86,7 +85,6 @@ fn deploy_platform_fee() -> ContractAddress {
 
     deployed_contract
 }
-
 
 
 fn deploy_dao_factory(platform_fee: ContractAddress) -> ContractAddress {
@@ -285,8 +283,25 @@ fn create_and_asign_task(
                 estimate: 3
             }
         );
+    dao_dispatcher
+        .create_assign_task(
+            dev1,
+            0,
+            Task {
+                creator: task_manager,
+                start_date: 0,
+                deadline: 100000000,
+                title: get_textstruct_test('New Task 1'),
+                short_description: get_textstruct_test('Task short description 1'),
+                task_detail: get_textstruct_test('Task detail url 1'),
+                status: TaskStatus::OPEN,
+                estimate: 4
+            }
+        );
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
     let tasks: Array<Task> = dao_project_dispatcher.get_project_tasks(0);
+    let memberTasks: Array<Task> = dao_project_dispatcher.get_member_tasks(dev1);
+    assert(memberTasks.len() == 2, 'No assign success');
     let first_task: Task = *tasks.at(0);
 
     assert(first_task.estimate == 3, 'Fail to create task');
@@ -295,14 +310,15 @@ fn create_and_asign_task(
 fn change_task_status(
     dao_project_dispatcher: IDAOProjectDispatcher,
     dao_address: ContractAddress,
-    code_reviewer: ContractAddress
+    code_reviewer: ContractAddress,
+    task_index: u32,
 ) {
     start_prank(cheatcodes::CheatTarget::One(dao_address), code_reviewer);
-    dao_project_dispatcher.change_task_status(0, 0, TaskStatus::COMPLETE);
+    dao_project_dispatcher.change_task_status(0, task_index, TaskStatus::COMPLETE);
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
 
     let tasks: Array<Task> = dao_project_dispatcher.get_project_tasks(0);
-    let first_task: Task = *tasks.at(0);
+    let first_task: Task = *tasks.at(task_index);
     let is_completed_task: bool = match first_task.status {
         TaskStatus::OPEN => false,
         TaskStatus::ASSIGNED => false,
@@ -322,21 +338,30 @@ fn pay_member(
     dao_address: ContractAddress,
     treasury_manager: ContractAddress,
     dev1: ContractAddress,
-    platform_fee: ContractAddress
+    platform_fee: ContractAddress,
 ) {
+    let payment_amount: u256 = dao_dispatcher.get_payment_amount(0);
+    println!("Payment amount:{}", payment_amount);
+
+    assert(payment_amount == 30_000_u256, 'Incorrect payment amount');
+
     start_prank(cheatcodes::CheatTarget::One(dao_address), treasury_manager);
     dao_dispatcher.pay_member(0);
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
+
     // Check treasury balance
     let treasury_balance: u256 = erc20_dispatcher.balance_of(dao_address);
     let dev1_balance: u256 = erc20_dispatcher.balance_of(dev1);
     let platform_fee_balance: u256 = erc20_dispatcher.balance_of(platform_fee);
 
     assert(
-        (treasury_balance + dev1_balance + platform_fee_balance) == 2000_000_000_u256 
-    && dev1_balance == 30_000_u256
-    && platform_fee_balance == 30000 * 50 / 10000
-    , 'Not paid success');
+        (treasury_balance + dev1_balance + platform_fee_balance) == 2000_000_000_u256
+            && dev1_balance == 30_000_u256
+            && platform_fee_balance == 30000
+            * 50
+            / 10000,
+        'Not paid success'
+    );
 }
 
 #[test]
@@ -420,7 +445,7 @@ fn test_c2p() {
     create_and_asign_task(dao_dispatcher, dao_project_dispatcher, dao_address, task_manager, dev1);
 
     println!("10. Change task status to complete (By code reviewer)");
-    change_task_status(dao_project_dispatcher, dao_address, code_reviewer);
+    change_task_status(dao_project_dispatcher, dao_address, code_reviewer, 0);
     println!("11. Pay dev by a treasury manager");
     pay_member(
         dao_dispatcher,

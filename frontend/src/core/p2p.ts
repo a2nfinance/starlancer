@@ -23,7 +23,7 @@ if (!p2pContractTyped) {
 
 
 export const createJob = async (formValues: FormData, account: AccountInterface | undefined) => {
-   
+
     try {
         if (!account) {
             // notification here
@@ -73,8 +73,8 @@ export const getJobs = async () => {
     try {
         let jobs = await p2pContractTyped.get_jobs(0, 100);
         let converedJobs = jobs.map(job => convertJobData(job));
-        store.dispatch(setProps({att: "jobs", value: converedJobs}))
-        store.dispatch(setProps({att: "isLoadingJobs", value: false}));
+        store.dispatch(setProps({ att: "jobs", value: converedJobs }))
+        store.dispatch(setProps({ att: "isLoadingJobs", value: false }));
     } catch (e) {
         console.log(e)
     }
@@ -88,11 +88,11 @@ export const getMyCreatedJobs = async (account: AccountInterface | undefined) =>
         let jobs = await p2pContractTyped.get_employer_jobs(account.address, 0, 100);
         console.log(jobs);
         let converedJobs = jobs.map(job => convertJobData(job));
-        store.dispatch(setProps({att: "createdJobs", value: converedJobs}))
+        store.dispatch(setProps({ att: "createdJobs", value: converedJobs }))
     } catch (e) {
-        
+
     }
-   
+
 }
 
 export const applyJob = async (account: AccountInterface | undefined) => {
@@ -133,7 +133,7 @@ export const getJobCandidates = async () => {
         if (!selectedJob.title) {
             return;
         }
-    
+
         let jobCandidates = await p2pContractTyped.get_job_candidates(selectedJob.index);
         console.log(jobCandidates)
 
@@ -152,7 +152,7 @@ export const getEmployerJobCandidates = async (account: AccountInterface | undef
         if (!account || !selectedJob.title) {
             return;
         }
-    
+
         let jobCandidates = await p2pContractTyped.get_job_candidates_by_local_index(account.address, selectedJob.index);
         console.log("jobCandidates", jobCandidates);
         store.dispatch(setProps({ att: "jobCandidates", value: jobCandidates }));
@@ -170,7 +170,7 @@ export const acceptCandidate = async (account: AccountInterface | undefined, can
             return;
         }
         store.dispatch(updateActionStatus({ actionName: actionNames.acceptCandidateAction, value: true }));
-       
+
         let now = moment().unix();
         let myCallData = p2pContractTyped.populate("accept_candidate",
             [
@@ -231,7 +231,7 @@ export const newTask = async (formValues: FormData, account: AccountInterface | 
         await provider.waitForTransaction(newTaskRes.transaction_hash);
 
         openNotification("New task", `New task was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
-        // getProjectTasks();
+        getJobTasks();
     } catch (e) {
         console.log(e);
         openNotification("New task", `Fail to create new task`, MESSAGE_TYPE.ERROR, () => { })
@@ -246,11 +246,91 @@ export const getJobTasks = async () => {
         if (!selectedJob.title) {
             return;
         }
-   
-        let projectTasks = await p2pContractTyped.get_project_tasks(selectedJob.index);
+
+        let projectTasks = await p2pContractTyped.get_job_tasks(selectedJob.index);
         let convertedTasks = projectTasks.map((task, index) => convertTaskData({ ...task, index: index }));
         store.dispatch(setProps({ att: "jobTasks", value: convertedTasks }));
     } catch (e) {
         console.log(e);
     }
+}
+
+export const changeTaskStatus = async (taskIndex: number, status: string, account: AccountInterface | undefined) => {
+    try {
+        let { selectedJob } = store.getState().p2p;
+        if (!selectedJob.title || !account) {
+            return;
+        }
+        store.dispatch(updateActionStatus({ actionName: actionNames.changeTaskStatusAction, value: true }));
+        let statusEnum: any;
+        if (status === "reviewing") {
+            statusEnum = {
+                REVIEWING: true
+            };
+        }
+        if (status === "complete") {
+            statusEnum = {
+                COMPLETE: true
+            };
+        }
+
+        if (status === "cancel") {
+            statusEnum = {
+                CANCELLED: true
+            };
+        }
+        if (!statusEnum) {
+            return;
+        }
+        p2pContractTyped.connect(account);
+        let res = await p2pContractTyped.change_job_task_status(selectedJob.index, taskIndex, new CairoCustomEnum(statusEnum));
+        await provider.waitForTransaction(res.transaction_hash);
+        openNotification("Update task status", `Task status was updated successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        getJobTasks();
+    } catch (e) {
+        console.log(e);
+        openNotification("Update task status", `Fail to update the task status`, MESSAGE_TYPE.ERROR, () => { })
+    }
+
+    store.dispatch(updateActionStatus({ actionName: actionNames.changeTaskStatusAction, value: false }));
+}
+
+export const getPaymentAmount = async (account: AccountInterface | undefined) => {
+    try {
+        let { selectedJob } = store.getState().p2p;
+        if (!selectedJob.title || !account) {
+            return;
+        }
+
+        let paymentAmount = await p2pContractTyped.get_job_payment_amount(account.address, selectedJob.index);
+        store.dispatch(setProps({ att: "paymentAmount", value: paymentAmount }));
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export const payDev = async (account: AccountInterface | undefined) => {
+    try {
+        let { selectedJob, paymentAmount } = store.getState().p2p;
+        let { rateFee } = store.getState().platformFee;
+        if (!selectedJob.title || !account) {
+            return;
+        }
+        store.dispatch(updateActionStatus({ actionName: actionNames.payDevAction, value: true }));
+        
+        let contract = new Contract(STARLANCER_TOKEN.abi, selectedJob.pay_by_token, provider);
+
+        contract.connect(account);
+        let res = await contract.approve(P2P_MKP.address, paymentAmount);
+        await provider.waitForTransaction(res.transaction_hash);
+        p2pContractTyped.connect(account);
+        let payRes = await p2pContractTyped.pay_dev(selectedJob.index);
+        await provider.waitForTransaction(payRes.transaction_hash);
+        openNotification("Dev Payout", `A payment was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
+    } catch (e) {
+        console.log(e);
+        openNotification("Dev Payout", `Fail to create the payment`, MESSAGE_TYPE.ERROR, () => { })
+    }
+
+    store.dispatch(updateActionStatus({ actionName: actionNames.payDevAction, value: false }));
 }

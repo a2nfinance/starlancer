@@ -85,7 +85,7 @@ export const createDAO = async (account: AccountInterface | undefined) => {
         let { kycForm, treasuryManagersForm, memberManagersForm, projectManagersForm, jobManagersForm } = store.getState().daoForm
 
         let socialNetworks = "";
-        socialNetworks.concat(kycForm.twitter, ",", kycForm.telegram, ",", kycForm.discord, ",", kycForm.facebook);
+        socialNetworks = socialNetworks.concat(kycForm.twitter, ",", kycForm.telegram, ",", kycForm.discord, ",", kycForm.facebook);
         let daoDetail = {
             name: convertToTextStruct(kycForm.name),
             short_description: convertToTextStruct(kycForm.short_description),

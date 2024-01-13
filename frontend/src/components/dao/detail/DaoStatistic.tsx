@@ -1,9 +1,8 @@
-import { Button, Col, Divider, Drawer, Input, Modal, Popover, Row, Select, Space, Statistic, Typography } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
 import { useAppSelector } from '@/controller/hooks';
-import { useAccount } from '@starknet-react/core';
-import { useRouter } from 'next/router';
 import { getDAOStatistics } from '@/core/c2p';
+import { Col, Row, Statistic, Typography } from 'antd';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 
 const {Text} = Typography;
 
@@ -32,7 +31,7 @@ export const DaoStatistic = () => {
         <Statistic title="Jobs" value={BigInt(statistics.num_jobs).toString()} />
       </Col>
       <Col span={4}>
-        <Statistic title="Task" value={BigInt(statistics.num_tasks).toString()} />
+        <Statistic title="Tasks" value={BigInt(statistics.num_tasks).toString()} />
       </Col>
     </Row>
   )

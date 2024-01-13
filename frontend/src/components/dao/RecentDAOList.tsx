@@ -4,9 +4,8 @@ import { useAppSelector } from "@/controller/hooks";
 import { getDAOs } from "@/core/c2p";
 import { Item } from "./Item";
 
-export const DAOList = () => {
-    // const { featuredProjects } = useAppSelector(state => state.project)
-    const { daos, isLoadingDAOs } = useAppSelector(state => state.dao)
+export const RecentDAOList = () => {
+    const {daos, isLoadingDAOs} = useAppSelector(state => state.dao)
     useEffect(() => {
         getDAOs()
     }, [])
@@ -17,12 +16,8 @@ export const DAOList = () => {
                 column: 3
             }}
             size="large"
-            pagination={
-                {
-                    pageSize: 9
-                }
-            }
             loading={isLoadingDAOs}
+            pagination={false}
             dataSource={daos}
             renderItem={(item, index) => (
                 <Item index={index} dao={item} />

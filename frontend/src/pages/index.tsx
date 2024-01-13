@@ -1,24 +1,25 @@
-import { WalletBar } from "@/components/common/WalletBar";
-import { DAOList } from "@/components/dao/DAOList";
-import { createDAO, getDAOs } from "@/core/c2p";
-import { useAccount } from "@starknet-react/core";
-import { Button, Card, Col, Image, Row, Space } from "antd";
+import { RecentDAOList } from "@/components/dao/RecentDAOList";
+import { P2PRecentJobs } from "@/components/job/p2p/P2PRecentJobs";
+import { Divider, Space } from "antd";
 
 import { Typography } from 'antd';
-import { useRouter } from "next/router";
 
-const { Title, Text } = Typography;
-const { Meta } = Card;
+const { Title } = Typography;
+
 
 export default function Index() {
-    const router = useRouter();
-    const { account } = useAccount();
+
 
     return (
   
-            <Space>
-
-                <DAOList />
+            <Space style={{maxWidth: 1200}} wrap direction="vertical">
+                <Title level={3}>{"Recent registered companies".toUpperCase()}</Title >
+                <Divider />
+                <RecentDAOList />
+                <Divider/>
+                <Title level={3}>{"Latest P2P jobs".toUpperCase()}</Title >
+                <Divider/>
+                <P2PRecentJobs />
             </Space>
      
     )

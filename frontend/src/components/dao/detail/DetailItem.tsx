@@ -14,16 +14,21 @@ import { UserRoles } from './UserRoles';
 export const DetailItem = () => {
   const { detail: dao } = useAppSelector(state => state.daoDetail);
   const router = useRouter();
-  const {openLinkToExplorer, getShortAddress} = useAddress();
+  const { openLinkToExplorer, getShortAddress } = useAddress();
 
   useEffect(() => {
-      if (router.query["address"]) {
-          getDAODetail(router.query["address"].toString());
-      }
+    if (router.query["address"]) {
+      getDAODetail(router.query["address"].toString());
+    }
   }, [router.query["address"]])
-
+  const socialNetworks = [
+    "Twitter",
+    "Telegram",
+    "Discord",
+    "Facebook"
+  ]
   return (
-    <Card key={`dao`} title={dao.name} headStyle={headStyle} style={{ margin: 5}} extra={
+    <Card key={`dao`} title={dao.name} headStyle={headStyle} style={{ margin: 5 }} extra={
       <Space>
         <Button type='primary' onClick={() => router.push(`/dao/detail/${dao.address}`)}>View details</Button>
       </Space>
@@ -31,7 +36,16 @@ export const DetailItem = () => {
     }>
       <Descriptions layout={"vertical"} column={1}>
         <Descriptions.Item label={"Website"}>{dao.detail ? dao.detail : "N/A"}</Descriptions.Item>
-        <Descriptions.Item label={"Social networks"}>{dao.social_networks ? dao.social_networks.map(sn => <a key={sn}>{sn}</a>) : "N/A"}</Descriptions.Item>
+        <Descriptions.Item label={"Social networks"}>
+          <Space wrap>
+            {
+              dao.social_networks.length ? dao.social_networks.map(
+                (sn, index) => sn ? <Button icon={<LinkOutlined />} key={sn} onClick={() => window.open(sn, "_blank")}>{
+                  sn ? socialNetworks[index] : ""
+                }</Button> : <></>
+              ) : "N/A"}
+          </Space>
+        </Descriptions.Item>
         <Descriptions.Item label={"Address"}><Button onClick={() => openLinkToExplorer(dao.address)}>{getShortAddress(dao.address)}</Button></Descriptions.Item>
       </Descriptions>
       <Divider />
@@ -39,7 +53,7 @@ export const DetailItem = () => {
         <Descriptions.Item label={"Description"}>{dao.short_description ? dao.short_description : "N/A"}</Descriptions.Item>
       </Descriptions>
       <Divider />
-      <UserRoles/>
+      <UserRoles />
     </Card>
   );
 }

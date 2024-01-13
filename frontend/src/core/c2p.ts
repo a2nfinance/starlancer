@@ -43,7 +43,7 @@ export const getDAOs = async () => {
         let daoDetails = await Promise.all(reqList);
 
         let daos = daoDetails.map((detail, index) => convertDAOData({ ...detail, address: addresses[index] }));
-        store.dispatch(setDAOProps({ att: "daos", value: daos }))
+        store.dispatch(setDAOProps({ att: "daos", value: daos.reverse() }))
         store.dispatch(setDAOProps({ att: "isLoadingDAOs", value: false }))
     } catch (e) {
         console.log(e);
@@ -147,6 +147,7 @@ export const fundDAO = async (tokenAddresses: string, account: AccountInterface 
         let fundRes = await daoContractTyped.fund(tokenAddresses, convertedAmount);
         await provider.waitForTransaction(fundRes.transaction_hash);
         openNotification("Fund DAO", `Funding ${dao.name} is successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        getBalances();
     } catch (e) {
         console.log(e);
         openNotification("Fund DAO", `Fail to fund ${dao.name}`, MESSAGE_TYPE.ERROR, () => { })
@@ -194,6 +195,7 @@ export const createJob = async (formValues: FormData, account: AccountInterface 
 
         openNotification("New job", `Job "${formValues["title"]}" was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
         getJobs(dao.address);
+        getDAOStatistics(dao.address);
     } catch (e) {
         console.log(e);
         openNotification("New job", `Fail to create new job `, MESSAGE_TYPE.ERROR, () => { })
@@ -278,6 +280,7 @@ export const acceptCandidate = async (account: AccountInterface | undefined, can
 
         openNotification("Accept candidate", `The candidate was accepted`, MESSAGE_TYPE.SUCCESS, () => { })
         getDevelopers(dao.address);
+        getDAOStatistics(dao.address);
     } catch (e) {
         console.log(e);
         openNotification("Accept candidate", `Fail to accept the candidate`, MESSAGE_TYPE.ERROR, () => { })
@@ -332,6 +335,7 @@ export const createProject = async (formValues: FormData, account: AccountInterf
         await provider.waitForTransaction(projectRes.transaction_hash);
         openNotification("Create project", `Project "${formValues["title"]}" was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
         getDAOProjects(dao.address);
+        getDAOStatistics(dao.address);
     } catch (e) {
         console.log(e);
         openNotification("Create project", `Fail to create project "${formValues["title"]}"`, MESSAGE_TYPE.ERROR, () => { })
@@ -364,6 +368,7 @@ export const addWhiteListedContributor = async (formValues: FormData, account: A
         await provider.waitForTransaction(addRes.transaction_hash);
 
         openNotification("Add contributor", `Contributor was added successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        getUserRoles(dao.address, account);
     } catch (e) {
         console.log(e);
         openNotification("Add contributor", `Fail to add the contributor`, MESSAGE_TYPE.ERROR, () => { })
@@ -439,6 +444,7 @@ export const newTask = async (formValues: FormData, account: AccountInterface | 
 
         openNotification("New task", `New task was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
         getProjectTasks();
+        getDAOStatistics(dao.address);
     } catch (e) {
         console.log(e);
         openNotification("New task", `Fail to create new task`, MESSAGE_TYPE.ERROR, () => { })
@@ -486,7 +492,6 @@ export const changeTaskStatus = async (taskIndex: number, status: string, accoun
                 CANCELLED: true
             };
         }
-        console.log(statusEnum);
         if (!statusEnum) {
             return;
         }
@@ -531,18 +536,6 @@ export const payDev = async (account: AccountInterface | undefined) => {
         if (!devContractOption.Some) {
             return;
         }
-
-        let devContract = devContractOption.Some;
-
-        let erc20Contract = new Contract(STARLANCER_TOKEN.abi, num.toHexString(devContract.pay_by_token), provider);
-        let convertedAmount = BigInt(200.4 * 10 ** 18);
-
-        erc20Contract.connect(account);
-        let res = await erc20Contract.approve(dao.address, convertedAmount);
-        await provider.waitForTransaction(res.transaction_hash);
-
-
-
         daoContractTyped.connect(account);
         let payRes = await daoContractTyped.pay_member(selectedDevIndex);
         await provider.waitForTransaction(payRes.transaction_hash);
@@ -572,6 +565,53 @@ export const getDevContract = async (devIndex: number) => {
 
 }
 
+
+export const updateContract = async (account: AccountInterface | undefined) => {
+    try {
+        const {selectedDevIndex} = store.getState().daoDetail;
+        try {
+            let { detail: dao } = store.getState().daoDetail;
+            if (!dao.address || !account) {
+                return;
+            }
+            singletonDAOContract(dao.address);
+            await getDevContract(selectedDevIndex);
+
+            const {devContract} = store.getState().daoDetail;
+    
+            store.dispatch(updateActionStatus({ actionName: actionNames.updateContractAction, value: true }));
+    
+            let myCallData = daoContractTyped.populate("update_contract",
+                [
+                    selectedDevIndex,
+                    0,
+                    {
+                        start_date: devContract.start_date,
+                        end_date: devContract.end_date,
+                        contract_type: new CairoCustomEnum({HOURY: true}),
+                        fixed_price: 0,
+                        hourly_rate: BigInt(1.5 * 10**18),
+                        pay_by_token: devContract.pay_by_token,
+                        status: true,
+                    }
+                ]
+            )
+            daoContractTyped.connect(account);
+    
+            let updateRes = await daoContractTyped.update_contract(myCallData.calldata);
+    
+            await provider.waitForTransaction(updateRes.transaction_hash);
+    
+            openNotification("Update contract", `Dev contract was updated successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        } catch (e) {
+            console.log(e);
+            openNotification("Update contract", `Fail to update dev contract`, MESSAGE_TYPE.ERROR, () => { })
+        }
+        store.dispatch(updateActionStatus({ actionName: actionNames.updateContractAction, value: false }));
+    } catch (error) {
+        
+    }
+}
 
 
 export const getUserRoles = async (address: string, account: AccountInterface | undefined) => {

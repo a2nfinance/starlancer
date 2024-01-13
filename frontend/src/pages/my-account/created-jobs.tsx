@@ -108,6 +108,7 @@ export default function CreatedJobs() {
     ]
     return (
         <Card title={"MY CREATED JOBS"} headStyle={headStyle}>
+
             <Table
                 pagination={false}
                 columns={columns}
@@ -128,6 +129,7 @@ export default function CreatedJobs() {
                 <ViewTasks />
 
             </Modal>
+
         </Card>
     )
 }

@@ -14,7 +14,7 @@ export const BatchForm = () => {
 
     const onFinish = useCallback((values: any) => {
         doBatch(values, account);
-    }, [])
+    }, [account?.address])
 
     let tokenOptions: {label: string, value: string}[] = Object.keys(WHITELISTED_TOKENS).map((token)=> {
         return {
@@ -34,7 +34,7 @@ export const BatchForm = () => {
             }}>
 
             <Card size="default" headStyle={headStyle} title="RECIPIENTS">
-                <Form.Item name={"token"} >
+                <Form.Item name={"token_address"} >
                     <Select size="large" options={tokenOptions} />
                 </Form.Item>
                 <Form.List name="recipients">

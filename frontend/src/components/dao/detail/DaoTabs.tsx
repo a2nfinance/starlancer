@@ -4,6 +4,7 @@ import { TokenBalances } from '@/components/treasury/TokenBalances';
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
 import { ProjectList } from '../../project/ProjectList';
+import { MyTasks } from '@/components/developer/MyTasks';
 
 
 export const DaoTabs = () => {
@@ -28,6 +29,11 @@ export const DaoTabs = () => {
             key: '4',
             label: `Developers`,
             children: <DeveloperList />
+        },
+        {
+            key: '5',
+            label: `My Tasks (Dev Only)`,
+            children: <MyTasks />
         }
     ];
 

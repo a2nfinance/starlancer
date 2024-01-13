@@ -15,7 +15,7 @@ export const actionNames = {
     newTaskAction: "newTaskAction",
     changeTaskStatusAction: "changeTaskStatusAction",
     payDevAction: "payDevAction",
-    createBatchPaymentAction: "createBatchPayment",
+    createBatchPaymentAction: "createBatchPaymentAction",
     createStreamAction: "createStreamAction",
     fundStreamAction: "fundStreamAction",
     cancelStreamAction: "cancelStreamAction",

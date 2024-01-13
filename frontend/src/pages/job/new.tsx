@@ -18,7 +18,7 @@ export default function NewJob() {
         createJob(values, account);
     }, [account?.address])
     return (
-        <Card title={"NEW PUBLIC JOB"}>
+        <Card title={"NEW P2P JOB"}>
 
             <Form
                 name="new-job"

@@ -707,3 +707,20 @@ export const getBalances = async () => {
     }
 
 }
+
+export const getMemberTasks =async (account: AccountInterface | undefined) => {
+    try {
+        let { detail: dao } = store.getState().daoDetail;
+        if (!dao.address || !account) {
+            return;
+        }
+        singletonDAOContract(dao.address);
+    
+        let devTasks = await daoContractTyped.get_member_tasks(account.address);
+        let convertedTasks = devTasks.map((task, index) => convertTaskData({ ...task, index: index }));
+        store.dispatch(setProps({ att: "devTasks", value: convertedTasks }));
+    } catch(e) {
+        console.log(e);
+    }
+   
+}

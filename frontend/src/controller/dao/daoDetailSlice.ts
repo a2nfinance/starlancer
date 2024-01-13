@@ -93,6 +93,7 @@ export type DaoDetailState = {
     jobCandidates: string[],
     balances: number[],
     projectTasks: Task[],
+    devTasks: Task[],
     devContract: DevContract,
     paymentAmount: number,
     selectedDevIndex: number
@@ -154,6 +155,7 @@ const initialState: DaoDetailState = {
     jobCandidates: [],
     balances: [],
     projectTasks: [],
+    devTasks: [],
     devContract: {
         start_date: moment().unix(),
         end_date: moment().unix(),

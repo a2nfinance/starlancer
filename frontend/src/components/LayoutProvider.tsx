@@ -11,7 +11,9 @@ import { useRouter } from 'next/router';
 import { AiOutlineAppstoreAdd, AiOutlineFileAdd } from "react-icons/ai";
 import { FaSuperscript } from "react-icons/fa";
 import { RiTaskLine } from "react-icons/ri";
-
+import { MdOutlineWaterDrop, MdOutlineWorkOutline, MdOutlineWorkHistory   } from "react-icons/md";
+import { GrGroup } from "react-icons/gr";
+import { BsPersonWorkspace } from "react-icons/bs";
 import React, { useState } from "react";
 import { WalletBar } from './common/WalletBar';
 const { Header, Sider, Content, Footer } = Layout;
@@ -62,7 +64,7 @@ export const LayoutProvider = (props: Props) => {
                         },
                         {
                             key: '3.1',
-                            icon: <RiTaskLine />,
+                            icon: <MdOutlineWorkOutline />,
                             label: "P2P Jobs",
                             onClick: () => router.push("/job/")
                         },
@@ -75,19 +77,19 @@ export const LayoutProvider = (props: Props) => {
                                 {
                                     key: '4.1',
                                     label: "Created Jobs",
-                                    icon: <AiOutlineAppstoreAdd />,
+                                    icon: <MdOutlineWorkHistory />,
                                     onClick: () => router.push("/my-account/created-jobs")
                                 },
                                 {
                                     key: '4.2',
                                     label: "My Jobs",
-                                    icon: <AiOutlineAppstoreAdd />,
+                                    icon: <BsPersonWorkspace />,
                                     onClick: () => router.push("/my-account/my-jobs")
                                 },
                                 {
                                     key: '4.3',
                                     label: "New job",
-                                    icon: <AiOutlineFileAdd />,
+                                    icon: <MdOutlineWorkOutline />,
                                     onClick: () => router.push("/job/new")
                                 },
                             ]
@@ -101,14 +103,30 @@ export const LayoutProvider = (props: Props) => {
                                 {
                                     key: '5.1',
                                     label: "Crypto streaming",
-                                    icon: <AiOutlineAppstoreAdd />,
-                                    onClick: () => router.push("/dao/new")
+                                    icon: <MdOutlineWaterDrop />,
+                                    children: [
+                                        {
+                                            key: '7_1',
+                                            label: "New Stream",
+                                            onClick: () => router.push("/payment/crypto-streaming/new")
+                                        },
+                                        {
+                                            key: '7_2',
+                                            label: "Outgoing",
+                                            onClick: () => router.push("/payment/crypto-streaming/outgoing")
+                                        },
+                                        {
+                                            key: '7_3',
+                                            label: "Incoming",
+                                            onClick: () => router.push("/payment/crypto-streaming/incoming")
+                                        },
+                                    ]
                                 },
                                 {
                                     key: '5.2',
-                                    label: "Locked time payment",
-                                    icon: <AiOutlineFileAdd />,
-                                    onClick: () => router.push("/project/new")
+                                    label: "Batch payment",
+                                    icon: <GrGroup />,
+                                    onClick: () => router.push("/payment/batch-payment")
                                 },
                             ]
                         },
@@ -132,7 +150,7 @@ export const LayoutProvider = (props: Props) => {
                                 },
                             ]
                         },
-                        
+
                     ]}
                 />
             </Sider>
@@ -157,7 +175,7 @@ export const LayoutProvider = (props: Props) => {
                                 {/* <AutoSearch /> */}
                             </Form.Item>
                             <Form.Item>
-                               
+
                                 <WalletBar />
                             </Form.Item>
                         </Form>

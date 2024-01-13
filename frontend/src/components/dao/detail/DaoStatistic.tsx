@@ -32,7 +32,7 @@ export const DaoStatistic = () => {
         <Statistic title="Jobs" value={BigInt(statistics.num_jobs).toString()} />
       </Col>
       <Col span={4}>
-        <Statistic title="Task" value={BigInt(statistics.num_jobs).toString()} />
+        <Statistic title="Task" value={BigInt(statistics.num_tasks).toString()} />
       </Col>
     </Row>
   )

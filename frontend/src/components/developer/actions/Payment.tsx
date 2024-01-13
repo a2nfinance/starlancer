@@ -19,7 +19,7 @@ export const Payment = () => {
                     {rateFee / 100} %
                 </Descriptions.Item>
                 <Descriptions.Item label={"Total"}>
-                    {(Number(BigInt(paymentAmount)) / Number(BigInt(10**18))) *(1 + rateFee / 10000)}
+                    {((Number(BigInt(paymentAmount)) / Number(BigInt(10**18))) *(1 + rateFee / 10000)).toFixed(5)}
                 </Descriptions.Item>
             </Descriptions>
             <Divider />

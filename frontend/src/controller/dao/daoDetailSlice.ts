@@ -12,7 +12,8 @@ export type Detail = {
 type Statistics = {
     num_members: number,
     num_projects: number,
-    num_jobs: number
+    num_jobs: number,
+    num_tasks: number
 }
 type Project = {
     index?: number,
@@ -109,7 +110,8 @@ const initialState: DaoDetailState = {
     statistics: {
         num_members: 0,
         num_projects: 0,
-        num_jobs: 0
+        num_jobs: 0,
+        num_tasks: 0
     },
     projects: [],
     userRoles: {

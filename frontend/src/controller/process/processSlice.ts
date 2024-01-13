@@ -14,7 +14,14 @@ export const actionNames = {
     removeContributorAction: "removeContributorAction",
     newTaskAction: "newTaskAction",
     changeTaskStatusAction: "changeTaskStatusAction",
-    payDevAction: "payDevAction"
+    payDevAction: "payDevAction",
+    createBatchPaymentAction: "createBatchPayment",
+    createStreamAction: "createStreamAction",
+    fundStreamAction: "fundStreamAction",
+    cancelStreamAction: "cancelStreamAction",
+    transferStreamAction: "transferStreamAction",
+    withdrawStreamAction: "withdrawStreamAction",
+    updateContractAction: "updateContractAction"
 }
 
 
@@ -33,7 +40,14 @@ const initialState: Processes = {
     removeContributorAction: false,
     newTaskAction: false,
     changeTaskStatusAction: false,
-    payDevAction: false
+    payDevAction: false,
+    createBatchPaymentAction: false,
+    createStreamAction: false,
+    fundStreamAction: false,
+    cancelStreamAction: false,
+    transferStreamAction: false,
+    withdrawStreamAction: false,
+    updateContractAction: false
 }
 
 export const processesSlice = createSlice({

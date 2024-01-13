@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@/controller/hooks"
-import { getDevContract, getDevelopers, getPaymentAmount } from "@/core/c2p";
+import { getDevContract, getDevelopers, getPaymentAmount, updateContract } from "@/core/c2p";
 import { WHITELISTED_TOKENS } from "@/core/config";
 import { useAddress } from "@/hooks/useAddress";
 import { Button, Descriptions, Modal, Space, Table, Tag } from "antd"
@@ -10,6 +10,7 @@ import { ViewContract } from "./actions/ViewContract";
 import { getRateFee } from "@/core/platform";
 import { Payment } from "./actions/Payment";
 import { setProps } from "@/controller/dao/daoDetailSlice";
+import { useAccount } from "@starknet-react/core";
 
 
 export const DeveloperList = () => {
@@ -17,6 +18,7 @@ export const DeveloperList = () => {
     const { openLinkToExplorer, getShortAddress } = useAddress();
     const [openViewContractModal, setOpenViewContractModal] = useState(false);
     const [openPaymentModal, setOpenPaymentModal] = useState(false);
+    const {account} = useAccount();
     const dispatch = useAppDispatch();
     const handleOpenViewContract = useCallback((index: number) => {
         getDevContract(index);
@@ -36,6 +38,11 @@ export const DeveloperList = () => {
     const handleClosePayment = () => {
         setOpenPaymentModal(false);
     }
+
+    const handleUpdateContract = useCallback((index) => {
+        dispatch(setProps({att: "selectedDevIndex", value: index}));
+        updateContract(account);
+    }, [selectedDevIndex])
     useEffect(() => {
         getRateFee();
     }, [])
@@ -63,6 +70,9 @@ export const DeveloperList = () => {
                     <Button disabled={!userRoles.is_member_manager} onClick={() => handleOpenViewContract(index)}>
                         View contract
                     </Button>
+                    {/* <Button disabled={!userRoles.is_member_manager} onClick={() => handleUpdateContract(index)}>
+                        Update contract
+                    </Button> */}
                     <Button disabled={!userRoles.is_member_manager} onClick={() => { }}>
                         End contract
                     </Button>
@@ -80,7 +90,7 @@ export const DeveloperList = () => {
                 <ViewContract />
             </Modal>
 
-            <Modal width={300} title={"PAYMENT"} open={openPaymentModal} onCancel={handleClosePayment} footer={false}>
+            <Modal width={250} title={"PAYMENT"} open={openPaymentModal} onCancel={handleClosePayment} footer={false}>
                 <Payment />
             </Modal>
         </>

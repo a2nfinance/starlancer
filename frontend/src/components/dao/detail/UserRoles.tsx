@@ -1,7 +1,7 @@
 import { useAppSelector } from "@/controller/hooks";
 import { getUserRoles } from "@/core/c2p";
 import { useAccount } from "@starknet-react/core";
-import { Descriptions, Tag } from "antd"
+import { Descriptions, Space, Tag } from "antd"
 import { useRouter } from "next/router"
 import { useEffect } from "react";
 
@@ -18,6 +18,7 @@ export const UserRoles = () => {
     return (
         <Descriptions layout="vertical">
             <Descriptions.Item label="Your roles">
+                <Space wrap>
                 {
                     userRoles.is_member && <Tag color="green">Developer</Tag>
                 }
@@ -50,6 +51,8 @@ export const UserRoles = () => {
                         && !userRoles.is_whitelisted_contributor
                         ) && <Tag color="green">N/A</Tag>
                 }
+                </Space>
+                
             </Descriptions.Item>
         </Descriptions>
     )

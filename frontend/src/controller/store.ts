@@ -5,6 +5,7 @@ import daoDetailReducer from "./dao/daoDetailSlice";
 import daoFormReducer from "./dao/daoFormSlice";
 import processReducer from './process/processSlice';
 import p2pReducer from "./p2p/p2pSlice";
+import streamReducer from "./stream/streamSlice";
 
 
 export function makeStore() {
@@ -15,7 +16,8 @@ export function makeStore() {
             daoForm: daoFormReducer,
             process: processReducer,
             platformFee: platformFeeReducer,
-            p2p: p2pReducer
+            p2p: p2pReducer,
+            stream: streamReducer
         },
         middleware: (getDefaultMiddleware) =>
             getDefaultMiddleware({

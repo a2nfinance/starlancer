@@ -78,7 +78,7 @@ export const ReviewAndApprove = () => {
 
             </Descriptions>
 
-            <Button loading={createDAOAction} type="primary" size="large" block onClick={() => createDAO(account)}>
+            <Button disabled={!account} loading={createDAOAction} type="primary" size="large" block onClick={() => createDAO(account)}>
                 Submit
             </Button>
         </Card>

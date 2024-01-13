@@ -1,12 +1,13 @@
 import { useAppSelector } from "@/controller/hooks";
-import { newTask } from "@/core/c2p";
+import { newTask } from "@/core/p2p";
+
 import { useAccount } from "@starknet-react/core";
-import { Alert, Button, Col, DatePicker, Descriptions, Divider, Form, Input, Row, Select, Tag } from "antd";
-import { useCallback, useEffect } from "react";
-import { num } from "starknet";
+import { Button, Col, DatePicker, Divider, Form, Input, Row } from "antd";
+import { useCallback } from "react";
 const { RangePicker } = DatePicker;
 export const NewTask = () => {
-    const { members, projectRoles } = useAppSelector(state => state.daoDetail);
+    const {selectedJob} = useAppSelector(state => state.p2p)
+    const {newTaskAction} = useAppSelector(state => state.process);
     const { account } = useAccount();
     const onFinish = useCallback((values: FormData) => {
         newTask(values, account);
@@ -38,7 +39,7 @@ export const NewTask = () => {
             </Form.Item>
 
             <Divider />
-            <Button htmlType="submit" disabled={!projectRoles.is_task_manager} style={{ width: "100%" }} size="large" type="primary">Submit</Button>
+            <Button htmlType="submit" loading={newTaskAction} disabled={account?.address !== selectedJob.creator} style={{ width: "100%" }} size="large" type="primary">Submit</Button>
         </Form>
     )
 }

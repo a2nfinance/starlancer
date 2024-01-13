@@ -9,7 +9,8 @@ type P2PState = {
     myJobs: Job[],
     jobTasks: Task[],
     selectedJob: Job,
-    jobCandidates: string[]
+    jobCandidates: string[],
+    paymentAmount: number
 }
 
 const initialState: P2PState = {
@@ -32,7 +33,8 @@ const initialState: P2PState = {
         pay_by_token: "",
         status: false
     },
-    jobCandidates: []
+    jobCandidates: [],
+    paymentAmount: 0
 }
 export const p2pSlice = createSlice({
     name: 'p2p',

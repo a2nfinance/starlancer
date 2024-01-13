@@ -1,19 +1,18 @@
 import { Task } from "@/controller/dao/daoDetailSlice";
 import { useAppSelector } from "@/controller/hooks";
-import { changeTaskStatus, getProjectRoles, getProjectTasks } from "@/core/c2p";
-import { headStyle, panelStyle } from "@/theme/layout"
+import { changeTaskStatus, getJobTasks } from "@/core/p2p";
+import { headStyle, panelStyle } from "@/theme/layout";
 import { useAccount } from "@starknet-react/core";
-import { Alert, Button, Card, Col, Collapse, Descriptions, Divider, Popover, Row, Space, Tag } from "antd"
+import { Alert, Button, Card, Col, Collapse, Descriptions, Divider, Popover, Row, Space } from "antd";
 import { useEffect } from "react";
 
 export const ViewTasks = () => {
-    const { projectRoles, projectTasks, selectedProject } = useAppSelector(state => state.daoDetail);
+    const { jobTasks } = useAppSelector(state => state.p2p);
     const { account } = useAccount();
     const { changeTaskStatusAction } = useAppSelector(state => state.process);
     useEffect(() => {
-        getProjectRoles(account);
-        getProjectTasks();
-    }, [account?.address, selectedProject.index])
+        getJobTasks();
+    }, [account?.address])
 
     const taskContent = (task: Task, index: number, prefix: string) => {
         return {
@@ -73,14 +72,6 @@ export const ViewTasks = () => {
     }
     return (
         <>
-            <Descriptions>
-                <Descriptions.Item label={"Your project roles"}>
-                    {projectRoles.is_task_manager && <Tag color="green">Task manager</Tag>}
-                    {projectRoles.is_code_reviewer && <Tag color="green">Code reviewer</Tag>}
-                    {(!projectRoles.is_code_reviewer && !projectRoles.is_task_manager) && <Tag color="green">N/A</Tag>}
-                </Descriptions.Item>
-
-            </Descriptions>
             <Alert type="info" message="Project managers, task managers, and code reviewers can change the task status" />
             <Divider />
             <Row gutter={6}>
@@ -88,7 +79,7 @@ export const ViewTasks = () => {
 
                     <Card headStyle={headStyle} title={"Assigned Tasks"}>
 
-                        <Collapse items={projectTasks.filter(task => task.status === 'assigned').map((task, index) => {
+                        <Collapse items={jobTasks.filter(task => task.status === 'assigned').map((task, index) => {
 
                             return taskContent(task, index, "assigned");
                         })} defaultActiveKey={['task-0']} onChange={() => { }} />
@@ -96,7 +87,7 @@ export const ViewTasks = () => {
                 </Col>
                 <Col span={6}>
                     <Card headStyle={headStyle} title={"Reviewing Tasks"}>
-                        <Collapse items={projectTasks.filter(task => task.status === 'reviewing').map((task, index) => {
+                        <Collapse items={jobTasks.filter(task => task.status === 'reviewing').map((task, index) => {
 
                             return taskContent(task, index, "reviewing");
                         })} defaultActiveKey={['task-0']} onChange={() => { }} />
@@ -105,7 +96,7 @@ export const ViewTasks = () => {
                 </Col>
                 <Col span={6}>
                     <Card headStyle={headStyle} title={"Completed Tasks"}>
-                        <Collapse items={projectTasks.filter(task => task.status === 'completed').map((task, index) => {
+                        <Collapse items={jobTasks.filter(task => task.status === 'completed').map((task, index) => {
 
                             return taskContent(task, index, "completed");
                         })} defaultActiveKey={['task-0']} onChange={() => { }} />
@@ -115,7 +106,7 @@ export const ViewTasks = () => {
                 <Col span={6}>
 
                     <Card headStyle={headStyle} title={"Cancelled Tasks"}>
-                        <Collapse items={projectTasks.filter(task => task.status === 'cancelled').map((task, index) => {
+                        <Collapse items={jobTasks.filter(task => task.status === 'cancelled').map((task, index) => {
 
                             return taskContent(task, index, "cancelled");
                         })} defaultActiveKey={['task-0']} onChange={() => { }} />

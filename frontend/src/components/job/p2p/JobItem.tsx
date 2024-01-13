@@ -5,10 +5,11 @@ import { WHITELISTED_TOKENS } from "@/core/config";
 import { applyJob } from "@/core/p2p";
 import { useAddress } from "@/hooks/useAddress";
 import { useToken } from "@/hooks/useToken";
-import { headStyle, headStyle1 } from "@/theme/layout";
+import { headStyle1 } from "@/theme/layout";
 import { useAccount } from "@starknet-react/core";
-import { Button, Card, Col, Descriptions, Popover, Row, Space } from "antd";
+import { Button, Card, Col, Descriptions, Flex, Popover, Row } from "antd";
 import { useCallback } from "react";
+import { MdOutlineWorkOutline } from "react-icons/md";
 import { CandidateList } from "./CandidateList";
 
 export const JobItem = ({ index, job }: { index: number, job: Job }) => {
@@ -23,7 +24,7 @@ export const JobItem = ({ index, job }: { index: number, job: Job }) => {
         applyJob(account);
     }, [account?.address])
     return (
-        <Card title={job.title} headStyle={headStyle1}>
+        <Card title={<Flex align='center' gap={5}><MdOutlineWorkOutline />{job.title}</Flex>} headStyle={headStyle1}>
             <Descriptions layout="vertical" column={1}>
                 <Descriptions.Item label="Short description">
                     {job.short_description}

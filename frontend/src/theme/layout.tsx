@@ -14,6 +14,11 @@ const headStyle = {
     color: "whitesmoke"
 }
 
+const headStyle1 = {
+    backgroundColor: "#faad14",
+    color: "whitesmoke"
+}
+
 const statisticCard = {
     background: "#f2fcfe", /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
@@ -33,5 +38,6 @@ export {
     headStyle,
     statisticCard,
     statisticCardRight,
-    panelStyle
+    panelStyle,
+    headStyle1
 }

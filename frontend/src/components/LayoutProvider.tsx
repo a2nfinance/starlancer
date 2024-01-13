@@ -57,12 +57,6 @@ export const LayoutProvider = (props: Props) => {
                             onClick: () => router.push("/dao/list")
                         },
                         {
-                            key: '3',
-                            icon: <RiTaskLine />,
-                            label: "Company Register",
-                            onClick: () => router.push("/dao/new")
-                        },
-                        {
                             key: '3.1',
                             icon: <MdOutlineWorkOutline />,
                             label: "P2P Jobs",
@@ -75,20 +69,20 @@ export const LayoutProvider = (props: Props) => {
                             label: !collapsed ? 'My Account' : '',
                             children: [
                                 {
+                                    key: '3',
+                                    icon: <RiTaskLine />,
+                                    label: "New company",
+                                    onClick: () => router.push("/dao/new")
+                                },
+                                {
                                     key: '4.1',
-                                    label: "Created Jobs",
+                                    label: "Created P2P Jobs",
                                     icon: <MdOutlineWorkHistory />,
                                     onClick: () => router.push("/my-account/created-jobs")
                                 },
                                 {
-                                    key: '4.2',
-                                    label: "My Jobs",
-                                    icon: <BsPersonWorkspace />,
-                                    onClick: () => router.push("/my-account/my-jobs")
-                                },
-                                {
                                     key: '4.3',
-                                    label: "New job",
+                                    label: "New P2P job",
                                     icon: <MdOutlineWorkOutline />,
                                     onClick: () => router.push("/job/new")
                                 },

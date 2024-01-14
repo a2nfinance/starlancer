@@ -142,14 +142,14 @@ fn fund(
         contract_address: dao_address
     };
 
-    println!(" 3.1. Add a whitelisted contributor");
+    println!(" 4.1. Add a whitelisted contributor");
 
     start_prank(cheatcodes::CheatTarget::One(dao_address), treasury_manager);
 
     treasury_dispatcher.add_whitelisted_contributor(caller);
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
 
-    println!(" 3.2. Approve smart contract for token transfer (2000_000_000_u256)");
+    println!(" 4.2. Approve smart contract for token transfer (2000_000_000_u256)");
 
     start_prank(cheatcodes::CheatTarget::One(erc20_contract_address), caller);
 
@@ -157,7 +157,7 @@ fn fund(
 
     stop_prank(cheatcodes::CheatTarget::One(erc20_contract_address));
 
-    println!(" 3.3. Send fund to the created DAO (2000_000_000_u256)");
+    println!(" 4.3. Send fund to the created DAO (2000_000_000_u256)");
 
     start_prank(cheatcodes::CheatTarget::One(dao_address), caller);
 
@@ -165,7 +165,7 @@ fn fund(
 
     stop_prank(cheatcodes::CheatTarget::One(dao_address));
 
-    println!(" 3.4. Check token balance");
+    println!(" 4.4. Check token balance");
     let token_balance: u256 = treasury_dispatcher.get_token_balance(erc20_contract_address);
 
     assert(token_balance == 2000_000_000_u256, 'Fail to fund');

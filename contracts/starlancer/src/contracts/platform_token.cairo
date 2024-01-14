@@ -1,3 +1,5 @@
+// This is Starlancer Token.
+// This token will be used in incentive purposes and applied a special discount to PlatformFee.
 use starknet::ContractAddress;
 
 #[starknet::contract]

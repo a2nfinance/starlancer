@@ -56,6 +56,8 @@ mod P2PJobsMarketplace {
     }
     #[abi(embed_v0)]
     impl P2PJobsMarketplaceImpl of super::IP2PJobsMarketplace<ContractState> {
+
+        // Only employers can create taks.
         fn create_job_task(ref self: ContractState, local_job_index: u32, task: Task) {
             P2PJobInternalImpl::_assert_is_employer(@self.p2p_jobs, local_job_index);
             let (global_index, _): (u32, Job) = P2PJobInternalImpl::_get_job_from_local_index(
@@ -64,7 +66,7 @@ mod P2PJobsMarketplace {
             P2PTaskInternalImpl::_create_task(ref self.p2p_tasks, global_index, task);
         }
 
-
+        // Get tasks of a job of an employer.
         fn get_employer_job_tasks(self: @ContractState, employer: ContractAddress, local_job_index: u32) -> Array<Task> {
             let (global_index, _): (u32, Job) = P2PJobInternalImpl::_get_job_from_local_index(
                 self.p2p_jobs, employer, local_job_index
@@ -74,6 +76,7 @@ mod P2PJobsMarketplace {
 
         }
 
+        // Change job status
         fn change_job_task_status(
             ref self: ContractState, local_job_index: u32, task_index: u32, status: TaskStatus
         ) {
@@ -86,6 +89,7 @@ mod P2PJobsMarketplace {
             );
         }
 
+        // Get job payment amount.
         fn get_job_payment_amount(self: @ContractState, employer: ContractAddress, local_job_index: u32) -> u256 {
             let (global_index, job): (u32, Job) = P2PJobInternalImpl::_get_job_from_local_index(
                 self.p2p_jobs, employer, local_job_index
@@ -106,14 +110,17 @@ mod P2PJobsMarketplace {
             total_amount
         }
 
+        // Pay a DEV based on his completed taks.
         fn pay_dev(ref self: ContractState, local_job_index: u32) {
             P2PJobInternalImpl::_assert_is_employer(@self.p2p_jobs, local_job_index);
             let (global_index, job): (u32, Job) = P2PJobInternalImpl::_get_job_from_local_index(
                 @self.p2p_jobs, get_caller_address(), local_job_index
             );
+            
             let payment_amount: u256 = P2PTaskInternalImpl::_calculate_billing(
-                ref self.p2p_tasks, local_job_index, job
+                ref self.p2p_tasks, global_index, job
             );
+
             let candidate_index: u32 = self
                 .p2p_jobs
                 .accepted_candidate

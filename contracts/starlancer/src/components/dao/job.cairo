@@ -25,10 +25,15 @@ mod job_component {
 
     #[storage]
     struct Storage {
+        // Store job managers
         job_managers: LegacyMap<ContractAddress, bool>,
+        // Key: job index, value: Job
         jobs: LegacyMap::<u32, Job>,
+        // Job candidates. Key: (job index, candidate index), value: candidate address 
         candidates: LegacyMap::<(u32, u32), ContractAddress>,
+        // Count total jobs
         count_job: u32,
+        // Count candidates of jobs. Key: job index, value: num of candidates
         count_job_candidates: LegacyMap<u32, u32>
     }
 
@@ -91,10 +96,14 @@ mod job_component {
     impl DAOJobsImpl<
         TContractState, +HasComponent<TContractState>
     > of super::IDAOJobs<ComponentState<TContractState>> {
+
+        // Get a job at job index.
         fn get_job_by_index(self: @ComponentState<TContractState>, index: u32) -> Job {
             let job: Job = self.jobs.read(index);
             job
         }
+
+        // Get a list of jobs with pagination options (offset & page_size)
         fn get_jobs(
             self: @ComponentState<TContractState>, job_index: u32, offset: u32, page_size: u32
         ) -> Array<Job> {
@@ -115,6 +124,7 @@ mod job_component {
             jobs
         }
 
+        // Get all candidates of a job at a job index.
         fn get_job_candidates(
             self: @ComponentState<TContractState>, job_index: u32
         ) -> Array<ContractAddress> {
@@ -133,10 +143,12 @@ mod job_component {
             candidates
         }
 
+        // Get a candidate address by a job index and a candidate index.
         fn get_job_candidate(self:@ComponentState<TContractState>, job_index: u32, candidate_index: u32) -> ContractAddress {
             self.candidates.read((job_index, candidate_index))
         }
 
+        // A developer can apply to a job with a job_index
         fn apply_job(ref self: ComponentState<TContractState>, job_index: u32) {
             let number_of_candidates: u32 = self.count_job_candidates.read(job_index);
             let mut is_applied: bool = false;
@@ -156,7 +168,8 @@ mod job_component {
 
                 i += 1;
             };
-
+            
+            // If the developer has not yet applied to the job.
             if (!is_applied) {
                 self.candidates.write((job_index, number_of_candidates), get_caller_address());
                 self.count_job_candidates.write(job_index, number_of_candidates + 1);
@@ -166,6 +179,7 @@ mod job_component {
             }
         }
 
+        // Only job managers can create a new job.
         fn add_job(ref self: ComponentState<TContractState>, job: Job) {
             self._assert_is_job_manager();
             let count_job: u32 = self.count_job.read();
@@ -190,6 +204,7 @@ mod job_component {
             self.count_job.write(count_job + 1);
         }
 
+        // Only job managers can close jobs.
         fn close_job(ref self: ComponentState<TContractState>, job_index: u32) {
             self._assert_is_job_manager();
             let job: Job = self.jobs.read(job_index);
@@ -214,6 +229,7 @@ mod job_component {
                 )
         }
 
+        // Only job managers can reopen a job
         fn reopen_job(
             ref self: ComponentState<TContractState>,
             job_index: u32,
@@ -248,10 +264,13 @@ mod job_component {
     impl DAOJobsInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of DAOJobsInternalImplTrait<TContractState> {
+
+        // Check the caller is a job manager or not.
         fn _assert_is_job_manager(self: @ComponentState<TContractState>) {
             assert(self.job_managers.read(get_caller_address()), Errors::NOT_JOB_MANAGER);
         }
 
+        // Only the DAO admin can create job managers
         fn _add_job_managers(
             ref self: ComponentState<TContractState>, job_managers: Array<ContractAddress>
         ) {
@@ -269,6 +288,7 @@ mod job_component {
             }
         }
 
+        // Only the DAO admin can remove job managers
         fn _remove_job_managers(
             ref self: ComponentState<TContractState>, job_managers: Array<ContractAddress>
         ) {

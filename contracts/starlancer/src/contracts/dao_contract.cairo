@@ -116,18 +116,22 @@ mod DAO {
 
     #[abi(embed_v0)]
     impl DAOImpl of super::IDAO<ContractState> {
+        // Only the DAO owner can stop it.
         fn stop_dao(ref self: ContractState) {
             assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
             assert(self.status.read(), 'Not active DAO');
             self.status.write(false);
         }
-
+        // Only the DAO owner can active it.
         fn active_dao(ref self: ContractState) {
             assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
             assert(!self.status.read(), 'Not stopped DAO');
             self.status.write(true);
         }
 
+
+        // This public function to get the dev payment amount.
+        // This function doesn't change the contract storage.
         fn get_payment_amount(self: @ContractState, member_index: u32) -> u256 {
             let current_contract: Option<Contract> = DAOMemberImpl::get_member_current_contract(
                 self, member_index
@@ -139,7 +143,7 @@ mod DAO {
                         self, member_index
                     );
 
-                    // Calculate billing here
+                    // Calculate a dev's payment amount
                     billing_amount = DAOProjectInternalImpl::_get_payment_amount(
                         self.dao_projects, member_address, contract
                     );
@@ -150,6 +154,7 @@ mod DAO {
             billing_amount
         }
 
+        // Only treasury managers can pay. 
         fn pay_member(ref self: ContractState, member_index: u32) {
             let current_contract: Option<Contract> = DAOMemberImpl::get_member_current_contract(
                 @self, member_index
@@ -165,8 +170,8 @@ mod DAO {
                     let billing_amount: u256 = DAOProjectInternalImpl::_calculate_billing(
                         ref self.dao_projects, member_address, contract
                     );
-                    // Do payment
 
+                    // Do payment
                     DAOTreasuryImpl::pay(
                         ref self, member_address, contract.pay_by_token, billing_amount
                     );
@@ -175,6 +180,7 @@ mod DAO {
             }
         }
 
+        // Create and assign taks to developers (members).
         fn create_assign_task(
             ref self: ContractState, assignee: ContractAddress, project_index: u32, task: Task
         ) {
@@ -184,6 +190,8 @@ mod DAO {
             );
         }
 
+
+        // Only employers can accept a job candidate
         fn accept_candidate(
             ref self: ContractState,
             job_index: u32,
@@ -201,6 +209,8 @@ mod DAO {
                 ref self.members, candidate, job, start_date, end_date
             );
         }
+
+        // Get member roles in this DAO.
         fn get_member_roles(self: @ContractState, address: ContractAddress) -> MemberRoles {
             let is_job_manager: bool = self.dao_jobs.job_managers.read(address);
             let is_member_manager: bool = self.members.member_managers.read(address);
@@ -218,6 +228,7 @@ mod DAO {
             }
         }
 
+        // Get roles of a member in a project.
         fn get_project_roles(
             self: @ContractState, address: ContractAddress, project_index: u32
         ) -> ProjectRoles {
@@ -233,6 +244,7 @@ mod DAO {
             ProjectRoles { is_code_reviewer: is_code_reviewer, is_task_manager: is_task_manager }
         }
 
+        // Extract some statistics.
         fn get_statistic(self: @ContractState) -> DAOStatistics {
             let num_jobs: u32 = self.dao_jobs.count_job.read();
             let num_projects: u32 = self.dao_projects.count_project.read();
@@ -253,17 +265,18 @@ mod DAO {
             }
         }
 
+        // Get the basic information of a DAO.
         fn get_dao_detail(self: @ContractState) -> DAODetail {
             self.dao_detail.read()
         }
 
+        // Only DAO owners can change their's DAO information.
          fn update_dao_detail(ref self: ContractState, dao_detail: DAODetail) {
             assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
             self.dao_detail.write(dao_detail);
          }
          
-        // Manager DAO Roles
-
+        // Manage DAO roles and project roles.
         fn add_project_managers(ref self: ContractState, project_managers: Array<ContractAddress>) {
             assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_OWNER);
 

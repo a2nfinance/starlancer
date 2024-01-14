@@ -12,10 +12,4 @@ starknet = "2.4.1"
 
 [[target.starknet-contract]]
 casm = true
-
-[[tool.snforge.fork]]
-name = "GoerliFork"
-url = "https://starknet-goerli.infura.io/v3/571aaed99608415397cb4eb46ca740c4"
-block_id.tag = "Latest"
-
-RUST_BACKTRACE=1
+allowed-libfuncs-list.name = "experimental"

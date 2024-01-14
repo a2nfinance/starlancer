@@ -30,11 +30,15 @@ mod DAOFactory {
     #[storage]
     struct Storage {
         owner: ContractAddress,
+        // Key: dao_index, value: ContractAddress
         daos: LegacyMap<u32, ContractAddress>,
-        // dao address, Creator address
+        // Key: dao address, Key: Creator address
         dao_creator: LegacyMap<ContractAddress, ContractAddress>,
+        // Num of DAOs.
         count_daos: u32,
+        // DAO class hash.
         dao_hash: ClassHash,
+        // the address of PlatformFee contract.
         platform_fee: ContractAddress
     }
 
@@ -66,9 +70,12 @@ mod DAOFactory {
 
     #[abi(embed_v0)]
     impl IDAOFactoryImpl of super::IDAOFactory<ContractState> {
+        // Get DAO owner.
         fn get_owner(self: @ContractState) -> ContractAddress {
             self.owner.read()
         }
+
+        // Create a DAO from this factory contract.
         fn create_dao(
             ref self: ContractState,
             dao_detail: DAODetail,
@@ -106,6 +113,7 @@ mod DAOFactory {
             }
         }
 
+        // Update DAO hash
         fn update_dao_hash(ref self: ContractState, new_dao_hash: ClassHash) {
             assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_FACTORY_ONWER);
 
@@ -113,11 +121,13 @@ mod DAOFactory {
             self.emit(UpdateDAOHash { caller: self.owner.read(), new_hash: new_dao_hash });
         }
 
+        // Update the address of PlatformFee contract.
         fn update_platform_fee(ref self: ContractState, new_platfrom_fee: ContractAddress) {
             assert(get_caller_address() == self.owner.read(), Errors::NOT_DAO_FACTORY_ONWER);
             self.platform_fee.write(new_platfrom_fee);
         }
 
+        // Get all DAOs.
         fn get_all_daos(self: @ContractState) -> Array<ContractAddress> {
             let mut daos: Array<ContractAddress> = ArrayTrait::new();
             let count_daos: u32 = self.count_daos.read();
@@ -135,6 +145,7 @@ mod DAOFactory {
             daos
         }
 
+        // get the creator address of a DAO.
         fn get_dao_creator(self: @ContractState, dao_contract: ContractAddress) -> ContractAddress {
             self.dao_creator.read(dao_contract)
         }

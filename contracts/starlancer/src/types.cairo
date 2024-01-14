@@ -101,6 +101,10 @@ struct DAODetail {
     detail: TextStruct,
     social_networks: TextStruct
 }
+
+// A string in cairo has a limitation of 31 characters.
+// This struct provides a way to store a string with limitation of 186 characters.
+// Using shortstring to convert a long string and store the long string here. 
 #[derive(Copy, Drop, Serde, starknet::Store)]
 struct TextStruct {
     text0: felt252,

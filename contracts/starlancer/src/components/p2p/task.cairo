@@ -13,11 +13,11 @@ mod task_component {
 
     #[storage]
     struct Storage {
-        // global_job_index, index of a task of a job, task
+        // Key: (global_job_index, index of a task of a job), value: task
         job_tasks: LegacyMap::<(u32, u32), Task>,
-        // global_job_index, number of tasks of a job
+        // Key: global_job_index, value: num of tasks of a job
         count_job_tasks: LegacyMap::<u32, u32>,
-        // global_job_index, index of a task of a job, paid or not paid
+        // key (global_job_index, index of a task of a job), value: paid or not paid
         paid_tasks: LegacyMap::<(u32, u32), bool>
     }
 
@@ -51,6 +51,7 @@ mod task_component {
     impl P2PTaskImpl<
         TContractState, +HasComponent<TContractState>
     > of super::IP2PTask<ComponentState<TContractState>> {
+        // Get all tasks of a job based on global_job_index
         fn get_job_tasks(self: @ComponentState<TContractState>, job_index: u32) -> Array<Task> {
             let mut tasks: Array<Task> = ArrayTrait::new();
             let mut i: u32 = 0;
@@ -72,6 +73,8 @@ mod task_component {
     impl P2PTaskInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of P2PTaskInternalImplTrait<TContractState> {
+        // Get a DEV payment amount based on completed tasks.
+        // This function doesn't change the contract storage
         fn _get_payment_amount(
             self: @ComponentState<TContractState>, job_index: u32, job: Job
         ) -> u256 {
@@ -113,6 +116,9 @@ mod task_component {
 
             total_amount
         }
+
+        // Get a DEV payment amount based on completed tasks.
+        // All completed taks will be changed to paid taks.
         fn _calculate_billing(
             ref self: ComponentState<TContractState>, job_index: u32, job: Job
         ) -> u256 {
@@ -156,7 +162,8 @@ mod task_component {
             total_amount
         }
 
-        // Need to check jobs owner permission in the main contract
+        // Create a new task for a job.
+        // This private function will be used in the main contract.
         fn _create_task(ref self: ComponentState<TContractState>, job_index: u32, task: Task) {
             let count_job_tasks: u32 = self.count_job_tasks.read(job_index);
             self
@@ -186,7 +193,8 @@ mod task_component {
                 );
         }
 
-        // Need to check jobs owner permission in the main contract
+        // Change a task status.
+        // This private function will be used in the main contract.
         fn _change_task_status(
             ref self: ComponentState<TContractState>,
             job_index: u32,

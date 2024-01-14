@@ -23,9 +23,13 @@ mod treasury_component {
 
     #[storage]
     struct Storage {
+        // Store token balance of a DAO. Key: token address, value: amount.
         token_balances: LegacyMap<ContractAddress, u256>,
+        // Store whitelisted contributors
         whitelisted_contributors: LegacyMap<ContractAddress, bool>,
+        // Store treasury managers
         treasury_managers: LegacyMap<ContractAddress, bool>,
+        // Store the address of PlatformFee contract.
         platform_fee: ContractAddress
     }
 
@@ -55,6 +59,12 @@ mod treasury_component {
     impl TreasuryImpl<
         TContractState, +HasComponent<TContractState>
     > of super::ITreasury<ComponentState<TContractState>> {
+
+        // Only treasury managers can pay developers based on their completed tasks.
+        // This action inlcude two steps:
+        // - Send an amount of ERC20 token to the developer.
+        // - Send an amount of ERC20 token to the PlatformFee contract.
+        // The service fee can be different for each token or DAO.
         fn pay(
             ref self: ComponentState<TContractState>,
             to: ContractAddress,
@@ -62,7 +72,6 @@ mod treasury_component {
             amount: u256
         ) {
             self._assert_is_treasury_manager();
-            // Payhere
 
             let erc20_dispatcher: IERC20Dispatcher = IERC20Dispatcher {
                 contract_address: pay_by_token
@@ -90,6 +99,7 @@ mod treasury_component {
         }
 
 
+        // Only whitelisted contributors can fund the DAO.
         fn fund(
             ref self: ComponentState<TContractState>, token_address: ContractAddress, amount: u256
         ) {
@@ -110,17 +120,22 @@ mod treasury_component {
             self.emit(Fund { from: caller, amount: amount });
         }
 
+        // Get a token balance.
         fn get_token_balance(
             self: @ComponentState<TContractState>, token_address: ContractAddress
         ) -> u256 {
             self.token_balances.read(token_address)
         }
+        
+        // Only treasury managers can add whitelisted_contributors.
         fn add_whitelisted_contributor(
             ref self: ComponentState<TContractState>, contributor: ContractAddress
         ) {
             self._assert_is_treasury_manager();
             self.whitelisted_contributors.write(contributor, true);
         }
+
+        // Only treasury managers can remove whitelisted_contributors.
         fn remove_whitelisted_contributor(
             ref self: ComponentState<TContractState>, contributor: ContractAddress
         ) {
@@ -128,6 +143,7 @@ mod treasury_component {
             self.whitelisted_contributors.write(contributor, false);
         }
 
+        // Whether an account address is in whitelisted contributors
         fn is_whitedlisted_contributor(self: @ComponentState<TContractState>, user: ContractAddress) -> bool {
             self.whitelisted_contributors.read(user)
         }
@@ -137,13 +153,18 @@ mod treasury_component {
     impl TreasuryInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of TreasuryInternalTrait<TContractState> {
+
+        // Initial the platform_fee contract address
         fn _init_platform_fee(ref self: ComponentState<TContractState>, platform_fee: ContractAddress) {
             self.platform_fee.write(platform_fee);
         }
+
+        // Whether the caller is a treasury manager
         fn _assert_is_treasury_manager(self: @ComponentState<TContractState>) {
             assert(self.treasury_managers.read(get_caller_address()), Errors::NOT_TREASURY_MANAGER);
         }
 
+        // Only the DAO admin can add treasury_managers.
         fn _add_treasury_managers(
             ref self: ComponentState<TContractState>, treasury_managers: Array<ContractAddress>
         ) {
@@ -161,6 +182,7 @@ mod treasury_component {
             }
         }
 
+        // Only the DAO admin can remove treasury_managers.
         fn _remove_treasury_managers(
             ref self: ComponentState<TContractState>, treasury_managers: Array<ContractAddress>
         ) {

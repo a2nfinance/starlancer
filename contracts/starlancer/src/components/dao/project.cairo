@@ -45,17 +45,19 @@ mod project_component {
 
     #[storage]
     struct Storage {
+        // Store project managers.
         project_managers: LegacyMap<ContractAddress, bool>,
         // project_index, task_manager
         task_managers: LegacyMap<(u32, ContractAddress), bool>,
         // project_index, code_reviewer
         code_reviewers: LegacyMap<(u32, ContractAddress), bool>,
-        // project_index, project details
+        // key: project_index, value: project details
         projects: LegacyMap<u32, Project>,
-        // project_index, task_index
+        // key: project_index, value: task_index
         project_tasks: LegacyMap<(u32, u32), Task>,
+        // Num of projects
         count_project: u32,
-        // project_index, counter
+        // project_index, num of project tasks
         count_project_tasks: LegacyMap<u32, u32>,
         // (member, member_task_index) (project_index, task_index)
         member_tasks: LegacyMap<(ContractAddress, u32), (u32, u32)>,
@@ -130,6 +132,12 @@ mod project_component {
     impl DAOProjectImpl<
         TContractState, +HasComponent<TContractState>
     > of super::IDAOProject<ComponentState<TContractState>> {
+
+        // Only project managers can create a new project.
+        // Initial project information includes:
+        // - Task managers
+        // - Code reviewers
+        // - Project settings.
         fn create_project(
             ref self: ComponentState<TContractState>,
             task_managers: Array<ContractAddress>,
@@ -181,7 +189,7 @@ mod project_component {
                 );
         }
 
-
+        // Get a list of projects.
         fn get_projects(self: @ComponentState<TContractState>) -> Array<Project> {
             let mut projects: Array<Project> = ArrayTrait::new();
             let mut i: u32 = 0;
@@ -199,6 +207,7 @@ mod project_component {
             projects
         }
 
+        // Get a list of project tasks.
         fn get_project_tasks(
             self: @ComponentState<TContractState>, project_index: u32
         ) -> Array<Task> {
@@ -218,6 +227,7 @@ mod project_component {
             tasks
         }
 
+        // Get a list of project tasks of a developer.
         fn get_member_tasks(self: @ComponentState<TContractState>, member: ContractAddress) -> Array<Task> {
             let mut tasks: Array<Task> = ArrayTrait::new();
             let mut i: u32 = 0;
@@ -236,14 +246,18 @@ mod project_component {
         }
 
 
+        // Get the information of a project at project_index.
         fn get_project(self: @ComponentState<TContractState>, project_index: u32) -> Project {
             self.projects.read(project_index)
         }
 
+        // Whether a task is paid or not.
+        // When a treasury manager does a Dev payment, all completed tasks will be changed to paid tasks.
         fn is_paid_task(self: @ComponentState<TContractState>, project_index: u32, task_index: u32) -> bool {
             self.paid_tasks.read((project_index, task_index))
         }   
 
+        // Only project managers can close an active project
         fn close_project(ref self: ComponentState<TContractState>, project_index: u32) {
             self._assert_is_project_manager();
 
@@ -267,6 +281,7 @@ mod project_component {
             self.emit(CloseProject { creator: get_caller_address(), project_index: project_index });
         }
 
+        // Only project managers can update a active project
         fn update_project(
             ref self: ComponentState<TContractState>, project_index: u32, project: Project
         ) {
@@ -282,6 +297,7 @@ mod project_component {
                 );
         }
 
+        // Only project managers can reopen a closed project
         fn reopen_project(ref self: ComponentState<TContractState>, project_index: u32) {
             self._assert_is_project_manager();
 
@@ -309,6 +325,11 @@ mod project_component {
                 );
         }
 
+
+        // Project managers, task managers, and code_reviewers can change a task status.
+        // Task status is an enum with 7 variants.
+        // The Starlancer frontend uses task status with 4 variants only (ASSIGNED, REVIEWING, COMPLETE, CANCELLED).
+        // If a task status is completed, it can not be changed.
         fn change_task_status(
             ref self: ComponentState<TContractState>,
             project_index: u32,
@@ -347,6 +368,8 @@ mod project_component {
                 )
         }
 
+
+        // Only project managers can add task managers.
         fn add_task_managers(
             ref self: ComponentState<TContractState>,
             project_index: u32,
@@ -367,6 +390,7 @@ mod project_component {
             }
         }
 
+        // Only project managers can remove managers.
         fn remove_task_managers(
             ref self: ComponentState<TContractState>,
             project_index: u32,
@@ -386,6 +410,8 @@ mod project_component {
                 }
             }
         }
+
+        // Only project managers can add code_reviewers.
         fn add_code_reviewers(
             ref self: ComponentState<TContractState>,
             project_index: u32,
@@ -405,6 +431,8 @@ mod project_component {
                 }
             }
         }
+
+        // Only project managers can remove code_reviewers.
         fn remove_code_reviewers(
             ref self: ComponentState<TContractState>,
             project_index: u32,
@@ -430,15 +458,19 @@ mod project_component {
     impl DAOProjectInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of DAOProjectInternalImplTrait<TContractState> {
+
+        // Whether the caller is a project manager or not.
         fn _assert_is_project_manager(self: @ComponentState<TContractState>) {
             assert(self.project_managers.read(get_caller_address()), Errors::NOT_PROJECT_MANAGER);
         }
 
+        // Whether the caller is a project creator or not.
         fn _assert_is_project_creator(self: @ComponentState<TContractState>, project_index: u32) {
             let project: Project = self.projects.read(project_index);
             assert(project.creator == get_caller_address(), Errors::NOT_PROJECT_CREATOR);
         }
 
+        // Whether the caller is a task manager or not.
         fn _assert_is_task_manager(self: @ComponentState<TContractState>, project_index: u32) {
             assert(
                 self.task_managers.read((project_index, get_caller_address())),
@@ -446,6 +478,7 @@ mod project_component {
             );
         }
 
+        // Whether the caller is a code reviewer or not.
         fn _assert_is_code_reviewer(self: @ComponentState<TContractState>, project_index: u32) {
             assert(
                 self.code_reviewers.read((project_index, get_caller_address())),
@@ -453,6 +486,7 @@ mod project_component {
             );
         }
 
+        // Whether the caller can change a task status.
         fn _allow_changing_task_status(self: @ComponentState<TContractState>, project_index: u32) {
             let caller_address: ContractAddress = get_caller_address();
             assert(
@@ -463,6 +497,8 @@ mod project_component {
             );
         }
 
+
+        // Only the DAO admin can add project managers.
         fn _add_project_managers(
             ref self: ComponentState<TContractState>, project_managers: Array<ContractAddress>
         ) {
@@ -480,6 +516,7 @@ mod project_component {
             }
         }
 
+        // Only the DAO admin can remove project managers.
         fn _remove_project_managers(
             ref self: ComponentState<TContractState>, project_managers: Array<ContractAddress>
         ) {
@@ -497,6 +534,10 @@ mod project_component {
             }
         }
 
+
+        // Task managers can create new tasks.
+        // A new task will be assigned to the accepted candidate.
+        // This action changes some storage variables.
         fn _create_task(
             ref self: ComponentState<TContractState>,
             assignee: ContractAddress,
@@ -540,6 +581,9 @@ mod project_component {
                     }
                 )
         }
+
+        // Get the payment amount of an accepted candidate (a DAO developer, member)
+        // The payment amount will be calculated by all completed tasks of the developer.
         fn _get_payment_amount(
             self: @ComponentState<TContractState>, member: ContractAddress, contract: Contract
         ) -> u256 {
@@ -589,6 +633,11 @@ mod project_component {
             amount
         }
 
+
+        // Get the payment amount of an accepted candidate (a DAO developer, member)
+        // The payment amount will be calculated by all completed tasks of the developer.
+        // After the payment process completed, completed tasks will be added to paid tasks.
+        // All paid tasks will not be used in the payment calculation process later.
         fn _calculate_billing(
             ref self: ComponentState<TContractState>, member: ContractAddress, contract: Contract
         ) -> u256 {

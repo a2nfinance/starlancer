@@ -23,14 +23,17 @@ mod member_component {
     use starlancer::error::Errors;
     #[storage]
     struct Storage {
+        // Store list of member (developer) managers
         member_managers: LegacyMap<ContractAddress, bool>,
-        // member => active or inactive
+        // Store members. Key: member index, value: member address
         members: LegacyMap<u32, ContractAddress>,
+        // member => active or inactive
         member_status: LegacyMap<ContractAddress, bool>,
-        // (member_index, contract_index) => bool
+        // Store a history of contracts. Key: (member_index, contract_index), value: contract
         member_contract_history: LegacyMap<(u32, u32), Contract>,
-        // member index => number of contracts
+        // Num of member contracts. member index => number of contracts
         count_member_contracts: LegacyMap<u32, u32>,
+        // Num of members
         count_members: u32,
     }
 
@@ -69,9 +72,12 @@ mod member_component {
     impl MemberImpl<
         TContractState, +HasComponent<TContractState>
     > of super::IMember<ComponentState<TContractState>> {
+
+        // Only member managers can renew a develop contract of a member.
         fn new_member_contract(
             ref self: ComponentState<TContractState>, member_index: u32, contract: Contract
         ) {
+            self._assert_is_member_manager();
             let member: ContractAddress = self.members.read(member_index);
             assert(self.member_status.read(member), Errors::MEMBER_NOT_ACTIVE);
 
@@ -85,17 +91,23 @@ mod member_component {
             self.emit(NewMemberContract { member: member, contract_index: 1 });
         }
 
+        // Only member managers can deactive developers
         fn disable_member(ref self: ComponentState<TContractState>, member: ContractAddress) {
+            self._assert_is_member_manager();
             self.member_status.write(member, false);
             self.emit(DisableMember { member: member })
         }
 
+        // Only member managers can change a developer contract
+        // This function is useful if the contract changes after a salary negotiation.
+        // Salary payment will be affected by completed tasks after the contract changed.
         fn update_contract(
             ref self: ComponentState<TContractState>,
             member_index: u32,
             contract_index: u32,
             contract: Contract
         ) {
+            self._assert_is_member_manager();
             let member: ContractAddress = self.members.read(member_index);
             assert(self.member_status.read(member), Errors::MEMBER_NOT_ACTIVE);
 
@@ -104,10 +116,13 @@ mod member_component {
             // Emit
             self.emit(UpdateContract { member });
         }
+
+        // Whether an account address is a member (developer) or not.
         fn is_member(self: @ComponentState<TContractState>, address: ContractAddress) -> bool {
             self.member_status.read(address)
         }
 
+        // Get a list of DAO developers with pagination options.
         fn get_members(
             self: @ComponentState<TContractState>, offset: u32, page_size: u32
         ) -> Array<ContractAddress> {
@@ -127,6 +142,8 @@ mod member_component {
             };
             members
         }
+
+        // Get a contracts history of a developer.
         fn get_member_contract_history(
             self: @ComponentState<TContractState>, member_index: u32
         ) -> Array<Contract> {
@@ -143,6 +160,8 @@ mod member_component {
             };
             contracts
         }
+
+        // Get the current contract of a developer.
         fn get_member_current_contract(
             self: @ComponentState<TContractState>, member_index: u32
         ) -> Option<Contract> {
@@ -156,7 +175,8 @@ mod member_component {
             }
            
         }
-
+        
+        // Get a developer address by a member index.
         fn get_member_by_index(
             self: @ComponentState<TContractState>, member_index: u32
         ) -> ContractAddress {
@@ -168,6 +188,9 @@ mod member_component {
     impl MemberInternalImpl<
         TContractState, +HasComponent<TContractState>
     > of MemberInternalTrait<TContractState> {
+
+        // Only member managers can add a member (developer).
+        // If the member address is existing, this action will be fail.
         fn _add_member(
             ref self: ComponentState<TContractState>,
             candidate: ContractAddress,
@@ -201,10 +224,12 @@ mod member_component {
             self.emit(AddMember { member: candidate });
         }
         
+        // Whether the caller is a member manager.
         fn _assert_is_member_manager(self: @ComponentState<TContractState>) {
             assert(self.member_managers.read(get_caller_address()), Errors::NOT_MEMBER_MANAGER);
         }
 
+        // Only the DAO admin can add member managers.
         fn _add_member_managers(
             ref self: ComponentState<TContractState>, member_managers: Array<ContractAddress>
         ) {
@@ -222,6 +247,7 @@ mod member_component {
             }
         }
 
+        // Only the DAO admin can remove member managers.
         fn _remove_member_managers(
             ref self: ComponentState<TContractState>, member_managers: Array<ContractAddress>
         ) {

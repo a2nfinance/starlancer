@@ -1,5 +1,5 @@
 use starknet::ContractAddress;
-
+// Mock ERC20 using for testing only.
 #[starknet::contract]
 mod MockERC20 {
     use openzeppelin::token::erc20::ERC20Component;

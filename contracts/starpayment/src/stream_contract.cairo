@@ -31,16 +31,21 @@ mod CryptoStream {
     use openzeppelin::token::erc20::interface::IERC20Dispatcher;
     #[storage]
     struct Storage {
+        // Key: Stream index, value: Stream
         streams: LegacyMap::<u64, Stream>,
+        // num of streams
         count_streams: u64,
-        // Local stream index, recipient address
+        // Key: (local stream index, recipient address), value: global stream index
         streams_of_recipient: LegacyMap::<(u64, ContractAddress), u64>,
-        // Local stream index, sender address
+        // Key: (local stream index, sender address), value: global stream index
         streams_of_sender: LegacyMap::<(u64, ContractAddress), u64>,
+        // Key: recipient address, value: num of streams of recipients.
         count_recipient_streams: LegacyMap::<ContractAddress, u64>,
+        // Key: sender address, value: num of streams of senders.
         count_sender_streams: LegacyMap::<ContractAddress, u64>,
-        // index, token, amount
+        // Key: (global stream index, token address), value: amount
         total_stream_fund: LegacyMap::<(u64, ContractAddress), u256>,
+        // Key: (global stream index, token address), value: amount
         stream_balance: LegacyMap::<(u64, ContractAddress), u256>,
     }
 
@@ -91,6 +96,7 @@ mod CryptoStream {
 
     #[abi(embed_v0)]
     impl CryptoStreamImpl of super::ICryptoStream<ContractState> {
+
         fn new_stream(ref self: ContractState, stream: Stream) {
             let count_streams: u64 = self.count_streams.read();
             let count_recipient_streams: u64 = self.count_recipient_streams.read(stream.recipient);
@@ -127,6 +133,7 @@ mod CryptoStream {
             self.count_recipient_streams.write(stream.recipient, count_recipient_streams + 1);
             self.count_sender_streams.write(stream.sender, count_sender_streams + 1);
         }
+
         fn cancel_stream(ref self: ContractState, stream_index: u64) { // Check previlege
             // Change status
             self._assert_cancel_previlege(stream_index);
@@ -168,6 +175,7 @@ mod CryptoStream {
 
             self.emit(CancelStream { index: stream_index, caller: get_caller_address() });
         }
+
         fn transfer_stream(
             ref self: ContractState, stream_index: u64, new_recipient: ContractAddress
         ) { // Check previlege
@@ -204,6 +212,7 @@ mod CryptoStream {
 
             self.emit(TransferStream { index: stream_index, caller: get_caller_address() });
         }
+
         fn withdraw_stream(ref self: ContractState, stream_index: u64) {
             let stream: Stream = self.streams.read(stream_index);
             let balance: u256 = self.stream_balance.read((stream_index, stream.pay_by_token));
@@ -322,6 +331,7 @@ mod CryptoStream {
             }
             amount
         }
+        
         fn _convert_unlock_every_to_second(
             self: @ContractState, unlock_every: u64, unlock_type: u8
         ) -> u64 {

@@ -18,7 +18,7 @@ export const RecentDAOList = () => {
             size="large"
             loading={isLoadingDAOs}
             pagination={false}
-            dataSource={daos}
+            dataSource={daos.slice(0,3)}
             renderItem={(item, index) => (
                 <Item index={index} dao={item} />
             )}

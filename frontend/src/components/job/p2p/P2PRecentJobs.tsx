@@ -19,7 +19,7 @@ export const P2PRecentJobs = () => {
         size="large"
         loading={isLoadingJobs}
         pagination={false}
-        dataSource={jobs}
+        dataSource={jobs.slice(0,3)}
         renderItem={(item, index) => (
             <JobItem index={index} job={item} />
         )}

@@ -1,6 +1,6 @@
 ## Overview
 
-Smart contracts for Starlancer have been developed using the [Cairo programming language](https://book.cairo-lang.org/). We have utilized the following libraries for testing purposes: Starknet 2.4.0, OpenZeppelin 0.8, and Snforge 0.13.
+Smart contracts for Starlancer have been developed using the [Cairo programming language](https://book.cairo-lang.org/). We have utilized the following libraries for development and testing purposes: Starknet 2.4.0, OpenZeppelin 0.8, and Snforge 0.13.
 
 Starlancer is a decentralized job marketplace with main contracts:
 - DAOFactory:

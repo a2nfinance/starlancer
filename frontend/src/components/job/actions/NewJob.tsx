@@ -86,7 +86,7 @@ export const NewJob = () => {
                     })} />
                         </Form.Item>
                     <Divider />
-                    <Button htmlType="submit" loading={newJobAction} disabled={!userRoles.is_project_manager} style={{ width: "100%" }} size="large" type="primary">Submit</Button>
+                    <Button htmlType="submit" loading={newJobAction} disabled={!userRoles.is_job_manager} style={{ width: "100%" }} size="large" type="primary">Submit</Button>
                 </Form>
             </Modal>
         </>

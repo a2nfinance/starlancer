@@ -240,7 +240,8 @@ export const applyJob = async (account: AccountInterface | undefined) => {
 
         await provider.waitForTransaction(applyRes.transaction_hash);
 
-        openNotification("Apply job", `Apply job "${selectedJob.title}" successful`, MESSAGE_TYPE.SUCCESS, () => { })
+        openNotification("Apply job", `Apply job "${selectedJob.title}" successful`, MESSAGE_TYPE.SUCCESS, () => { });
+        getJobCandidates();
     } catch (e) {
         console.log(e);
         openNotification("Apply job", `Fail to appply job`, MESSAGE_TYPE.ERROR, () => { })

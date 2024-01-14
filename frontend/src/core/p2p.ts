@@ -231,7 +231,7 @@ export const newTask = async (formValues: FormData, account: AccountInterface | 
         await provider.waitForTransaction(newTaskRes.transaction_hash);
 
         openNotification("New task", `New task was created successful`, MESSAGE_TYPE.SUCCESS, () => { })
-        getJobTasks();
+        getJobTasks(account);
     } catch (e) {
         console.log(e);
         openNotification("New task", `Fail to create new task`, MESSAGE_TYPE.ERROR, () => { })
@@ -240,15 +240,15 @@ export const newTask = async (formValues: FormData, account: AccountInterface | 
 }
 
 
-export const getJobTasks = async () => {
+export const getJobTasks = async (account: AccountInterface | undefined) => {
     try {
         let { selectedJob } = store.getState().p2p;
         if (!selectedJob.title) {
             return;
         }
 
-        let projectTasks = await p2pContractTyped.get_job_tasks(selectedJob.index);
-        let convertedTasks = projectTasks.map((task, index) => convertTaskData({ ...task, index: index }));
+        let employerTasks = await p2pContractTyped.get_employer_job_tasks(account?.address, selectedJob.index);
+        let convertedTasks = employerTasks.map((task, index) => convertTaskData({ ...task, index: index }));
         store.dispatch(setProps({ att: "jobTasks", value: convertedTasks }));
     } catch (e) {
         console.log(e);
@@ -286,7 +286,7 @@ export const changeTaskStatus = async (taskIndex: number, status: string, accoun
         let res = await p2pContractTyped.change_job_task_status(selectedJob.index, taskIndex, new CairoCustomEnum(statusEnum));
         await provider.waitForTransaction(res.transaction_hash);
         openNotification("Update task status", `Task status was updated successful`, MESSAGE_TYPE.SUCCESS, () => { })
-        getJobTasks();
+        getJobTasks(account);
     } catch (e) {
         console.log(e);
         openNotification("Update task status", `Fail to update the task status`, MESSAGE_TYPE.ERROR, () => { })
@@ -312,7 +312,6 @@ export const getPaymentAmount = async (account: AccountInterface | undefined) =>
 export const payDev = async (account: AccountInterface | undefined) => {
     try {
         let { selectedJob, paymentAmount } = store.getState().p2p;
-        let { rateFee } = store.getState().platformFee;
         if (!selectedJob.title || !account) {
             return;
         }

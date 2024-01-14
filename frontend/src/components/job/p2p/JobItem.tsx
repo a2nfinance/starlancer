@@ -24,7 +24,7 @@ export const JobItem = ({ index, job }: { index: number, job: Job }) => {
         applyJob(account);
     }, [account?.address])
     return (
-        <Card title={<Flex align='center' gap={5}><MdOutlineWorkOutline />{job.title}</Flex>} headStyle={headStyle1}>
+        <Card title={<Flex align='center' gap={5}><MdOutlineWorkOutline />{job.title}</Flex>} headStyle={headStyle1} style={{ margin: 5 }}>
             <Descriptions layout="vertical" column={1}>
                 <Descriptions.Item label="Short description">
                     {job.short_description}

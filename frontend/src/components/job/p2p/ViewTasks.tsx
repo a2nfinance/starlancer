@@ -11,7 +11,7 @@ export const ViewTasks = () => {
     const { account } = useAccount();
     const { changeTaskStatusAction } = useAppSelector(state => state.process);
     useEffect(() => {
-        getJobTasks();
+        getJobTasks(account);
     }, [account?.address])
 
     const taskContent = (task: Task, index: number, prefix: string) => {

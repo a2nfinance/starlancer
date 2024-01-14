@@ -311,12 +311,13 @@ export const getPaymentAmount = async (account: AccountInterface | undefined) =>
 
 export const payDev = async (account: AccountInterface | undefined) => {
     try {
-        let { selectedJob, paymentAmount } = store.getState().p2p;
+        let { selectedJob } = store.getState().p2p;
         if (!selectedJob.title || !account) {
             return;
         }
+       
         store.dispatch(updateActionStatus({ actionName: actionNames.payDevAction, value: true }));
-        
+        let paymentAmount = await p2pContractTyped.get_job_payment_amount(account.address, selectedJob.index);
         let contract = new Contract(STARLANCER_TOKEN.abi, selectedJob.pay_by_token, provider);
 
         contract.connect(account);

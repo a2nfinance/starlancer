@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { NewTask } from "./actions/NewTask";
 import { ViewTasks } from "./actions/ViewTasks";
 import { NewProject } from "./actions/NewProject";
+import { ViewDetail } from "./actions/ViewDetail";
 
 export const ProjectList = () => {
     const { projects, userRoles } = useAppSelector(state => state.daoDetail);
@@ -20,7 +21,7 @@ export const ProjectList = () => {
 
     const [openNewTaskModal, setOpenNewTaskModal] = useState(false);
     const [openTaskListModal, setOpenTaskListModal] = useState(false);
-
+    const [openViewDetailModal, setOpenViewDetailModal] = useState(false);
 
 
     const handleNewTask = useCallback((record, index) => {
@@ -42,6 +43,18 @@ export const ProjectList = () => {
     const handleCloseTaskListModal = () => {
         setOpenTaskListModal(false);
     }
+
+    const handleViewDetail = useCallback((record, index) => {
+        // open modal
+        // set selected project
+        dispatch(setProps({ att: "selectedProject", value: { ...record, index } }))
+        setOpenViewDetailModal(true);
+    }, [])
+
+    const handleCloseViewDetailModal = () => {
+        setOpenViewDetailModal(false);
+    }
+
     const handleAddCodeReviewers = useCallback((record) => {
         // open modal
         // set selected project
@@ -108,15 +121,15 @@ export const ProjectList = () => {
             render: (_, record, index) => (
                 <Popover key={`popover-${index}`} content={
                     <Space direction="vertical">
-                        <Button style={{ width: "100%" }}>View detail</Button>
+                        <Button style={{ width: "100%" }} onClick={() => handleViewDetail(record, index)}>View detail</Button>
                         <Divider />
                         <Button style={{ width: "100%" }} onClick={() => handleNewTask(record, index)}>New task</Button>
                         <Button style={{ width: "100%" }} onClick={() => handleOpenTaskList(record, index)}>View tasks</Button>
                         <Divider />
-                        <Button style={{ width: "100%" }}>Add task managers</Button>
-                        <Button style={{ width: "100%" }}>Add code reviewers</Button>
-                        <Button style={{ width: "100%" }}>Change status</Button>
-                        <Button style={{ width: "100%" }}>Update project</Button>
+                        <Button disabled={true} style={{ width: "100%" }}>Add task managers</Button>
+                        <Button disabled={true} style={{ width: "100%" }}>Add code reviewers</Button>
+                        <Button disabled={true} style={{ width: "100%" }}>Change status</Button>
+                        <Button disabled={true} style={{ width: "100%" }}>Update project</Button>
                     </Space>
                 }>
                     <Button type="primary">actions</Button>
@@ -134,6 +147,10 @@ export const ProjectList = () => {
                 dataSource={projects}
                 columns={columns}
             />
+            <Modal width={400} title={"PROJECT DETAILS"} open={openViewDetailModal} onCancel={handleCloseViewDetailModal} footer={null} >
+                <ViewDetail />
+
+            </Modal>
             <Modal width={500} title={"NEW TASK"} open={openNewTaskModal} onCancel={handleCloseNewTaskModal} footer={null} >
                 <NewTask />
 

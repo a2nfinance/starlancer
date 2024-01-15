@@ -11,6 +11,7 @@ import { getRateFee } from "@/core/platform";
 import { Payment } from "./actions/Payment";
 import { setProps } from "@/controller/dao/daoDetailSlice";
 import { useAccount } from "@starknet-react/core";
+import { getDomainByAddress } from "@/core/starknaming";
 
 
 export const DeveloperList = () => {
@@ -62,7 +63,7 @@ export const DeveloperList = () => {
             dataIndex: "action",
             render: (_, record, index) => (
                 <Space>
-                    <Button onClick={() => { }}>Show Starknet ID</Button>
+                    <Button onClick={() => getDomainByAddress(record.address)}>Show Starknet ID</Button>
 
                     <Button type="primary" disabled={!userRoles.is_treasury_manager} onClick={() => handleOpenPayment(index)}>
                         Payment

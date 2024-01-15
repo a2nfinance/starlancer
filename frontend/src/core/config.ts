@@ -3,7 +3,7 @@ import dao_abi from "@/abis/dao.json";
 import p2p_mkp_abi from "@/abis/p2p_mkp.json";
 import token_abi from "@/abis/starlancer_token.json"
 import platform_abi from "@/abis/platform_fee.json"
-
+import starknet_naming_abi from "@/abis/stark_naming.json"
 export const DAO_FACTORY = {
     address: process.env.NEXT_PUBLIC_DAO_FACTORY_ADDRESS,
     abi: dao_factory_abi
@@ -19,7 +19,8 @@ export const DAO = {
 }
 
 export const STARK_NAMING = {
-    address: process.env.NEXT_PUBLIC_STARK_NAMING
+    address: process.env.NEXT_PUBLIC_STARK_NAMING,
+    abi: starknet_naming_abi
 }
 
 export const STARLANCER_TOKEN = {

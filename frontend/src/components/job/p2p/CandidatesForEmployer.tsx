@@ -1,6 +1,7 @@
 import { useAppSelector } from "@/controller/hooks"
 
 import { acceptCandidate, getEmployerJobCandidates } from "@/core/p2p";
+import { getDomainByAddress } from "@/core/starknaming";
 import { useAddress } from "@/hooks/useAddress";
 import { useAccount } from "@starknet-react/core";
 import { Alert, Button, Space, Table } from "antd"
@@ -18,19 +19,6 @@ export const CandidatesForEmployer = () => {
     useEffect(() => {
         getEmployerJobCandidates(account);
     }, [selectedJob.index, account?.address])
-    const handleShowStarknetID = useCallback(async (address) => {
-        try {
-            let data = await fetch(`https://api.starknet.id/addr_to_domain?addr=${address}`);
-
-            let domain = await data.json();
-            setStarknetID(`Domain found: ${domain.domain}`)
-
-
-        } catch (e) {
-            setStarknetID("No domain found");
-        }
-
-    }, [])
     return (
         <>
             {starknetID && <Alert type="info" message={starknetID} />
@@ -53,7 +41,7 @@ export const CandidatesForEmployer = () => {
                         dataIndex: "action",
                         render: (_, record, index) => (
                             <Space>
-                                <Button onClick={() => handleShowStarknetID(record.address)}>Show Starknet ID</Button>
+                                <Button onClick={() => getDomainByAddress(record.address)}>Show Starknet ID</Button>
                                 <Button type="primary" loading={acceptCandidateAction} disabled={selectedJob.creator !== account?.address} onClick={() => acceptCandidate(account, index)}>
                                     Accept
                                 </Button>

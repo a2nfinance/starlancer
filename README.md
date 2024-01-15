@@ -14,9 +14,10 @@ Starlancer aims to resolve these issues with a fully on-chain product. With fast
 
 ## Demo information
 
-- [Website](https://starlancer.a2n.finance)
-- [Demo video]
+- [Starlancer application](https://starlancer.a2n.finance)
+- [Demo video]()
 - [Smart contract addresses & details](https://github.com/a2nfinance/starlancer/tree/master/contracts)
+- [Pitch deck]()
 
 ## Features:
 
@@ -47,6 +48,21 @@ Starlancer aims to resolve these issues with a fully on-chain product. With fast
 - **Cryptocurrency Payment:** In contrast to traditional freelancer platforms, Starlancer allows DAOs and employers to use whitelisted tokens for salary payments. Each job and developer contract can be paid in different tokens.
 
 ## How Starlancer works
+
+Starlancer focuses on two main workflows: Companies (DAOs) with developers and employers with developers.
+
+This is a simplified process demonstrating how a DAO works with its developers.
+
+![](frontend/public/docs/c2p.jpg)
+
+- When a candidate is accepted, a contract between the developer and DAO is created. Managers can update, create, and terminate contracts for developers.
+- A developer can undertake tasks for multiple projects within a company (DAO).
+- Each role in a DAO involves specific steps in the workflow, and the treasury manager will make payments to developers based on completed tasks.
+
+The working process for employers and developers is simpler than the above process. Employers take on all manager roles in this process. Tasks belong to jobs and do not belong to a specific project.
+
+![](frontend/public/docs/p2p.jpg)
+
 
 ## How Starlancer is implemented
 

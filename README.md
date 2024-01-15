@@ -50,7 +50,17 @@ Starlancer aims to resolve these issues with a fully on-chain product. With fast
 
 ## How Starlancer is implemented
 
+To develop Starlancer, we follow these steps:
 
+- Research and select ideas.
+- Learn the Cairo and Starknet ecosystems.
+- Develop smart contracts.
+- Write tests.
+- Develop UI/UX.
+- Update smart contracts to improve UX.
+- Fix bugs.
+
+We use OpenZeppelin, Cairo, and Snforge for smart contract development. Additionally, we utilize NextJs, Redux, StarknetJs, and starket-react for developing the frontend application.
 
 As Starlancer operates fully on-chain, all logic is handled by smart contracts. Our focus lies on the smart contracts architecture:
 
@@ -62,6 +72,7 @@ As Starlancer operates fully on-chain, all logic is handled by smart contracts. 
     - Project component
     - Developer (member) component
     - Treasury component
+
 - **P2PJobsMarketplace:** This smart contract facilitates collaboration between individual employers and freelancers. It consists of two Cairo components:
 
     - Job component

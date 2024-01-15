@@ -15,9 +15,9 @@ Starlancer aims to resolve these issues with a fully on-chain product. With fast
 ### 2. Demo information
 
 - [Starlancer application](https://starlancer.a2n.finance)
-- [Demo video]()
+- [Demo video](https://www.youtube.com/watch?v=XdjG1qXedpk)
 - [Smart contract addresses & details](https://github.com/a2nfinance/starlancer/tree/master/contracts)
-- [Pitch deck]()
+- [Pitch deck](https://www.canva.com/design/DAF5y3n1wOE/X2984P8-gZ7-H8vM4JdH_Q)
 
 ### 3. Features:
 

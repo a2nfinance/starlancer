@@ -1,7 +1,7 @@
 ## Vision
 Create a decentralized job marketplace empowered by blockchain technologies and backed by cryptocurrency payments.
-
-## Introduction
+## Description
+### 1. Overview
 
 In the wake of the COVID-19 pandemic, remote jobs and the freelancer market have experienced significant growth. In the near future, this market has the full potential to replace on-site jobs. However, if you have ever used traditional freelancer platforms, you can identify four main problems:
 
@@ -12,14 +12,14 @@ In the wake of the COVID-19 pandemic, remote jobs and the freelancer market have
 
 Starlancer aims to resolve these issues with a fully on-chain product. With fast transaction completion, low transaction fees, and a Layer 2 solution like Starknet, Starlancer is very well-suited to provide a transparent and auditable working process.
 
-## Demo information
+### 2. Demo information
 
 - [Starlancer application](https://starlancer.a2n.finance)
 - [Demo video]()
 - [Smart contract addresses & details](https://github.com/a2nfinance/starlancer/tree/master/contracts)
 - [Pitch deck]()
 
-## Features:
+### 3. Features:
 
 - **Fully On-Chain:** The Starlancer jobs marketplace is constructed using extensive smart contracts powered by Starknet & Cairo.
 
@@ -47,7 +47,7 @@ Starlancer aims to resolve these issues with a fully on-chain product. With fast
 
 - **Cryptocurrency Payment:** In contrast to traditional freelancer platforms, Starlancer allows DAOs and employers to use whitelisted tokens for salary payments. Each job and developer contract can be paid in different tokens.
 
-## How Starlancer works
+### 4. How Starlancer works
 
 Starlancer focuses on two main workflows: Companies (DAOs) with developers and employers with developers.
 
@@ -64,7 +64,7 @@ The working process for employers and developers is simpler than the above proce
 ![](frontend/public/docs/p2p.jpg)
 
 
-## How Starlancer is implemented
+### 5. Technical implementation
 
 To develop Starlancer, we follow these steps:
 
@@ -76,7 +76,7 @@ To develop Starlancer, we follow these steps:
 - Update smart contracts to improve UX.
 - Fix bugs.
 
-We use OpenZeppelin, Cairo, and Snforge for smart contract development. Additionally, we utilize NextJs, Redux, StarknetJs, and starket-react for developing the frontend application.
+We use OpenZeppelin, Cairo, and Snforge for smart contract development. Additionally, we utilize NextJs, Redux, StarknetJs, and starknet-react for developing the frontend application.
 
 As Starlancer operates fully on-chain, all logic is handled by smart contracts. Our focus lies on the smart contracts architecture:
 
@@ -106,7 +106,7 @@ The codebase of Starlancer's smart contracts is complex, prompting us to employ 
 - **Full Scenario Testing:** A comprehensive test encompasses the entire workflow, from the initial stage to the finish stage.
 
 
-## What next for Starlancer
+### 6. Future Development
 
 A blockchain-powered freelancer marketplace is inherently complex, and we have numerous ideas for implementation in the near future.
 
@@ -116,6 +116,14 @@ A blockchain-powered freelancer marketplace is inherently complex, and we have n
     - Empowers developers to engage in learning, earning, and obtaining certificates.
     - Supports continuous skill development and credential acquisition.
 - **Payment System:** Expands payment options for freelancers, offering alternatives like Crypto streaming or fiat-based payments. Enhances flexibility and accessibility in the financial aspects of freelancing on our platform.
+
+### 7. Conclusion
+
+During the OpenBuild Starknet Hackathon, we had an amazing experience exploring the potentials of Starlancer. Starknet, being a robust blockchain platform, demonstrates significant potential to emerge as a major player in the industry. We take pride in contributing, even in a modest way, to the success of the Starknet ecosystem through Starlancer.
+
+We express our sincere gratitude to the Starknet open-source community and the dedicated support from the Cairo community. Without their invaluable assistance, completing this product within the given time constraints wouldn't have been possible.
+
+We eagerly anticipate making further contributions to the growth and success of the Starknet ecosystem and are enthusiastic about the future possibilities with Starlancer.
 
 
 
